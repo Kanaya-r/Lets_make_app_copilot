@@ -1,0 +1,37 @@
+@use "reset";
+@use "variables" as *;
+
+// メインレイアウト
+.app-layout {
+  min-height: 100vh;
+  padding-bottom: $nav-height;
+}
+
+.main-content {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: $spacing-md;
+  padding-bottom: calc($nav-height + $spacing-lg);
+}
+
+// スケルトンローディング
+@keyframes skeleton-loading {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    $bg-tertiary 0px,
+    darken($bg-tertiary, 5%) 40px,
+    $bg-tertiary 80px
+  );
+  background-size: 200px 100%;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  border-radius: $border-radius;
+}

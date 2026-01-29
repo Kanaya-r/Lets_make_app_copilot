@@ -1,0 +1,138 @@
+@use "@/styles/variables" as *;
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-lg;
+  text-align: center;
+}
+
+.logo {
+  font-size: 64px;
+  margin-bottom: $spacing-md;
+}
+
+.title {
+  font-size: $font-size-2xl;
+  font-weight: 700;
+  color: $text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.subtitle {
+  font-size: $font-size-sm;
+  color: $text-secondary;
+  margin-bottom: $spacing-xl;
+}
+
+.card {
+  background-color: $bg-primary;
+  border-radius: $border-radius-lg;
+  padding: $spacing-lg;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: $shadow-md;
+}
+
+.sectionTitle {
+  font-size: $font-size-base;
+  font-weight: 600;
+  color: $text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.description {
+  font-size: $font-size-sm;
+  color: $text-secondary;
+  margin-bottom: $spacing-md;
+}
+
+.inputGroup {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+}
+
+.input {
+  flex: 1;
+  padding: $spacing-md;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
+  font-size: $font-size-lg;
+  text-align: center;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+  }
+
+  &::placeholder {
+    letter-spacing: normal;
+    text-transform: none;
+  }
+}
+
+.button {
+  width: 100%;
+  padding: $spacing-md;
+  border-radius: $border-radius;
+  font-size: $font-size-base;
+  font-weight: 600;
+  min-height: $tap-target-size;
+  transition: all 0.2s;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.primaryButton {
+  background-color: $primary-color;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background-color: $primary-dark;
+  }
+}
+
+.secondaryButton {
+  background-color: $bg-tertiary;
+  color: $text-secondary;
+
+  &:hover:not(:disabled) {
+    background-color: darken($bg-tertiary, 5%);
+  }
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: $spacing-lg 0;
+
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: $border-color;
+  }
+
+  span {
+    padding: 0 $spacing-md;
+    font-size: $font-size-sm;
+    color: $text-muted;
+  }
+}
+
+.error {
+  color: $error-color;
+  font-size: $font-size-sm;
+  margin-top: $spacing-sm;
+}

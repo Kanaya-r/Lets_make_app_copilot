@@ -1,0 +1,173 @@
+@use "@/styles/variables" as *;
+
+.page {
+  min-height: 100%;
+}
+
+.section {
+  margin-bottom: $spacing-lg;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  font-size: $font-size-base;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.sectionIcon {
+  font-size: $font-size-lg;
+}
+
+.viewAllLink {
+  font-size: $font-size-sm;
+  color: $primary-color;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.summaryCard {
+  background-color: $bg-primary;
+  border-radius: $border-radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-sm;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-md;
+}
+
+.summaryItem {
+  text-align: center;
+  padding: $spacing-md;
+  background-color: $bg-secondary;
+  border-radius: $border-radius;
+}
+
+.summaryLabel {
+  font-size: $font-size-xs;
+  color: $text-muted;
+  margin-bottom: $spacing-xs;
+}
+
+.summaryValue {
+  font-size: $font-size-xl;
+  font-weight: 700;
+  color: $text-primary;
+
+  &.highlight {
+    color: $primary-color;
+  }
+}
+
+.rateInfo {
+  margin-top: $spacing-md;
+  padding-top: $spacing-md;
+  border-top: 1px solid $border-color;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: $font-size-xs;
+  color: $text-muted;
+}
+
+.rateValue {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.rateError {
+  color: $warning-color;
+}
+
+.refreshButton {
+  padding: $spacing-xs $spacing-sm;
+  font-size: $font-size-xs;
+  color: $primary-color;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:disabled {
+    color: $text-muted;
+  }
+}
+
+.emptyState {
+  text-align: center;
+  padding: $spacing-xl $spacing-lg;
+  background-color: $bg-primary;
+  border-radius: $border-radius-lg;
+}
+
+.emptyIcon {
+  font-size: 48px;
+  margin-bottom: $spacing-md;
+}
+
+.emptyTitle {
+  font-size: $font-size-base;
+  font-weight: 600;
+  color: $text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.emptyDescription {
+  font-size: $font-size-sm;
+  color: $text-secondary;
+  margin-bottom: $spacing-lg;
+}
+
+.emptyButton {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-md $spacing-lg;
+  background-color: $primary-color;
+  color: white;
+  border-radius: $border-radius;
+  font-size: $font-size-sm;
+  font-weight: 500;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: $primary-dark;
+  }
+}
+
+.skeleton {
+  &Card {
+    background-color: $bg-primary;
+    border-radius: $border-radius-lg;
+    padding: $spacing-lg;
+  }
+
+  &Grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-md;
+  }
+
+  &Item {
+    height: 80px;
+    border-radius: $border-radius;
+  }
+}

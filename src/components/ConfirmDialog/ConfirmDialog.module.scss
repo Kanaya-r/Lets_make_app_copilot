@@ -1,0 +1,97 @@
+@use "@/styles/variables" as *;
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  padding: $spacing-md;
+  animation: fadeIn 0.2s ease;
+}
+
+.dialog {
+  background-color: $bg-primary;
+  width: 100%;
+  max-width: 320px;
+  border-radius: $border-radius-lg;
+  padding: $spacing-lg;
+  text-align: center;
+  animation: scaleIn 0.2s ease;
+}
+
+.icon {
+  font-size: 48px;
+  margin-bottom: $spacing-md;
+}
+
+.title {
+  font-size: $font-size-lg;
+  font-weight: 600;
+  color: $text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.message {
+  font-size: $font-size-sm;
+  color: $text-secondary;
+  margin-bottom: $spacing-lg;
+}
+
+.buttons {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.button {
+  flex: 1;
+  padding: $spacing-md;
+  border-radius: $border-radius;
+  font-size: $font-size-base;
+  font-weight: 500;
+  min-height: $tap-target-size;
+  transition: all 0.2s;
+}
+
+.cancelButton {
+  background-color: $bg-tertiary;
+  color: $text-secondary;
+
+  &:hover {
+    background-color: darken($bg-tertiary, 5%);
+  }
+}
+
+.confirmButton {
+  background-color: $error-color;
+  color: white;
+
+  &:hover {
+    background-color: darken($error-color, 10%);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

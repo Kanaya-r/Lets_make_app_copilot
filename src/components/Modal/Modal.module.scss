@@ -1,0 +1,99 @@
+@use "@/styles/variables" as *;
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 200;
+  animation: fadeIn 0.2s ease;
+
+  @media (min-width: $breakpoint-md) {
+    align-items: center;
+  }
+}
+
+.modal {
+  background-color: $bg-primary;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  border-radius: $border-radius-lg $border-radius-lg 0 0;
+  overflow: hidden;
+  animation: slideUp 0.3s ease;
+
+  @media (min-width: $breakpoint-md) {
+    border-radius: $border-radius-lg;
+    animation: scaleIn 0.2s ease;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md $spacing-lg;
+  border-bottom: 1px solid $border-color;
+}
+
+.title {
+  font-size: $font-size-lg;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: $tap-target-size;
+  height: $tap-target-size;
+  margin-right: -$spacing-sm;
+  color: $text-muted;
+  font-size: $font-size-xl;
+  transition: color 0.2s;
+
+  &:hover {
+    color: $text-primary;
+  }
+}
+
+.body {
+  padding: $spacing-lg;
+  overflow-y: auto;
+  max-height: calc(90vh - 130px);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
