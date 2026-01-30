@@ -1,5 +1,6 @@
 "use client";
 
+import { HiHome } from "react-icons/hi";
 import { APP_NAME } from "@/config/constants";
 import styles from "./Header.module.scss";
 
@@ -12,7 +13,7 @@ export function Header({ title }: HeaderProps) {
     <header className={styles.header}>
       <div className={styles.headerContent}>
         <div className={styles.titleGroup}>
-          <span className={styles.logo}>🏠</span>
+          <span className={styles.logo}><HiHome /></span>
           <h1 className={styles.title}>{title || APP_NAME}</h1>
         </div>
       </div>
