@@ -17,6 +17,7 @@ export default function SubscriptionsPage() {
     yearlyTotal,
     getAmountInJpy,
     deleteExistingSubscription,
+    togglePauseSubscription,
     isLoadingRate,
   } = useAuth();
 
@@ -131,7 +132,10 @@ export default function SubscriptionsPage() {
         ) : (
           <div className={styles.list}>
             {subscriptions.map((sub) => (
-              <div key={sub.id} className={styles.card}>
+              <div
+                key={sub.id}
+                className={`${styles.card} ${sub.isPaused ? styles.paused : ""}`}
+              >
                 <div className={styles.cardMain}>
                   <div className={styles.cardName}>{sub.name}</div>
                   <div className={styles.cardMeta}>
@@ -148,6 +152,15 @@ export default function SubscriptionsPage() {
                     </span>
                   </div>
                 </div>
+
+                <button
+                  className={`${styles.pauseButton} ${sub.isPaused ? styles.active : ""}`}
+                  onClick={() => togglePauseSubscription(sub.id)}
+                  aria-label={sub.isPaused ? "除外を解除" : "一時除外"}
+                  title={sub.isPaused ? "除外を解除" : "一時除外"}
+                >
+                  {sub.isPaused ? "▶️" : "⏸️"}
+                </button>
 
                 <div className={styles.cardMenu} ref={menuRef}>
                   <button
