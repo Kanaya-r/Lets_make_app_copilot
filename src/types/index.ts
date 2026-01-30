@@ -14,7 +14,7 @@ export interface Subscription {
 export interface Genre {
   id: string;
   name: string;
-  icon: string;
+  iconName: string; // アイコン名（コンポーネント側でマッピング）
   path: string;
 }
 

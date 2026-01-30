@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { HiCreditCard, HiPlus, HiPencil, HiChevronRight } from "react-icons/hi";
 import { useAuth } from "@/contexts/AuthContext";
 import { Header } from "@/components/Header";
 import { formatCurrency } from "@/lib/exchange";
@@ -27,11 +28,11 @@ export default function TopPage() {
       <section className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>
-            <span className={styles.sectionIcon}>💳</span>
+            <span className={styles.sectionIcon}><HiCreditCard /></span>
             サブスク
           </h2>
           <Link href="/subscriptions" className={styles.viewAllLink}>
-            詳細 →
+            詳細 <HiChevronRight />
           </Link>
         </div>
 
@@ -77,7 +78,7 @@ export default function TopPage() {
           </div>
         ) : (
           <div className={styles.emptyState}>
-            <div className={styles.emptyIcon}>📝</div>
+            <div className={styles.emptyIcon}><HiPencil /></div>
             <h3 className={styles.emptyTitle}>サブスクを登録しましょう</h3>
             <p className={styles.emptyDescription}>
               利用中のサブスクリプションを登録して
@@ -85,7 +86,7 @@ export default function TopPage() {
               月々の支払いを把握しましょう
             </p>
             <Link href="/subscriptions" className={styles.emptyButton}>
-              <span>+</span>
+              <HiPlus />
               サブスクを登録
             </Link>
           </div>

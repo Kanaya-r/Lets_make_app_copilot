@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { HiHome } from "react-icons/hi";
 import { useAuth } from "@/contexts/AuthContext";
 import { ToastContainer } from "@/components/Toast";
 
@@ -30,7 +31,7 @@ export default function AuthLayout({
         }}
       >
         <div style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "48px", marginBottom: "16px" }}>🏠</div>
+          <div style={{ fontSize: "48px", marginBottom: "16px" }}><HiHome /></div>
           <div>読み込み中...</div>
         </div>
       </div>
