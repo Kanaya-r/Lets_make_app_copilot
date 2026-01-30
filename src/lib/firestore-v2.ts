@@ -308,6 +308,26 @@ export async function deleteSubscription(
   });
 }
 
+// サブスクリプションの一時除外を切り替え
+export async function toggleSubscriptionPause(
+  shareCode: string,
+  subscriptionId: string
+): Promise<void> {
+  const sharedData = await getSharedData(shareCode);
+  if (!sharedData) throw new Error("Shared data not found");
+
+  const updatedSubscriptions = sharedData.subscriptions.map((sub) =>
+    sub.id === subscriptionId
+      ? { ...sub, isPaused: !sub.isPaused, updatedAt: new Date().toISOString() }
+      : sub
+  );
+  const docRef = doc(db, SHARED_DATA_COLLECTION, shareCode);
+  await updateDoc(docRef, {
+    subscriptions: updatedSubscriptions,
+    updatedAt: new Date().toISOString(),
+  });
+}
+
 // ========== 共有管理 ==========
 
 // 子アカウント情報を取得

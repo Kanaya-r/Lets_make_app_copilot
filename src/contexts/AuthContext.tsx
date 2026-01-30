@@ -27,6 +27,7 @@ import {
   addSubscription,
   updateSubscription,
   deleteSubscription,
+  toggleSubscriptionPause,
   getChildAccounts,
   revokeChildShare,
   promoteToParent,
@@ -52,6 +53,7 @@ interface AuthContextType {
   addNewSubscription: (data: Omit<Subscription, "id" | "createdAt" | "updatedAt">) => Promise<void>;
   updateExistingSubscription: (subscription: Subscription) => Promise<void>;
   deleteExistingSubscription: (id: string) => Promise<void>;
+  togglePauseSubscription: (id: string) => Promise<void>;
 
   // 為替レート
   exchangeRate: number;
@@ -294,6 +296,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // サブスクリプション一時除外切り替え
+  const togglePauseSubscription = async (id: string) => {
+    if (!userProfile?.shareCode) return;
+
+    try {
+      await toggleSubscriptionPause(userProfile.shareCode, id);
+    } catch (error) {
+      console.error("Error toggling subscription pause:", error);
+      showToast("error", "更新に失敗しました");
+      throw error;
+    }
+  };
+
   // 円換算金額を取得
   const getAmountInJpy = useCallback(
     (subscription: Subscription): number => {
@@ -305,8 +320,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [exchangeRate]
   );
 
-  // 月額合計
+  // 月額合計（一時除外を除く）
   const monthlyTotal = subscriptions.reduce((total, sub) => {
+    if (sub.isPaused) return total; // 一時除外は計算から除外
     const amountInJpy = getAmountInJpy(sub);
     if (sub.planType === "monthly") {
       return total + amountInJpy;
@@ -314,8 +330,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return total + Math.round(amountInJpy / 12);
   }, 0);
 
-  // 年額合計
+  // 年額合計（一時除外を除く）
   const yearlyTotal = subscriptions.reduce((total, sub) => {
+    if (sub.isPaused) return total; // 一時除外は計算から除外
     const amountInJpy = getAmountInJpy(sub);
     if (sub.planType === "yearly") {
       return total + amountInJpy;
@@ -407,6 +424,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         addNewSubscription,
         updateExistingSubscription,
         deleteExistingSubscription,
+        togglePauseSubscription,
         exchangeRate,
         isRateError,
         isLoadingRate,

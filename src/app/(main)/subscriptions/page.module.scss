@@ -81,11 +81,50 @@
   display: flex;
   align-items: center;
   gap: $spacing-md;
+  transition: opacity 0.2s, background-color 0.2s;
+
+  &.paused {
+    opacity: 0.5;
+    background-color: $bg-secondary;
+
+    .cardName,
+    .cardAmountJpy {
+      text-decoration: line-through;
+      color: $text-muted;
+    }
+  }
 }
 
 .cardMain {
   flex: 1;
   min-width: 0;
+}
+
+// 一時除外ボタン
+.pauseButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: $font-size-lg;
+  transition: all 0.2s;
+  background-color: transparent;
+  flex-shrink: 0;
+
+  &:hover {
+    background-color: $bg-secondary;
+  }
+
+  &.active {
+    background-color: $primary-color;
+    color: white;
+
+    &:hover {
+      background-color: $primary-dark;
+    }
+  }
 }
 
 .cardName {
