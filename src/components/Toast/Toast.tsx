@@ -1,5 +1,6 @@
 "use client";
 
+import { HiCheck, HiX, HiInformationCircle } from "react-icons/hi";
 import { useAuth } from "@/contexts/AuthContext";
 import styles from "./Toast.module.scss";
 
@@ -11,13 +12,13 @@ export function ToastContainer() {
   const getIcon = (type: string) => {
     switch (type) {
       case "success":
-        return "✓";
+        return <HiCheck />;
       case "error":
-        return "✕";
+        return <HiX />;
       case "info":
-        return "ℹ";
+        return <HiInformationCircle />;
       default:
-        return "";
+        return null;
     }
   };
 
@@ -32,7 +33,7 @@ export function ToastContainer() {
             onClick={() => removeToast(toast.id)}
             aria-label="閉じる"
           >
-            ×
+            <HiX />
           </button>
         </div>
       ))}

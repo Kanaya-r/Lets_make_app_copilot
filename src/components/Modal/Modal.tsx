@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useCallback, ReactNode } from "react";
+import { HiX } from "react-icons/hi";
 import styles from "./Modal.module.scss";
 
 interface ModalProps {
@@ -52,7 +53,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
             onClick={onClose}
             aria-label="閉じる"
           >
-            ×
+            <HiX />
           </button>
         </div>
         <div className={styles.body}>{children}</div>
