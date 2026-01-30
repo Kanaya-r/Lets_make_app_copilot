@@ -1,5 +1,6 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 // Firebase設定
 // 注意: 本番環境では環境変数から読み込むことを推奨
@@ -17,5 +18,8 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0
 
 // Firestore インスタンス
 export const db = getFirestore(app);
+
+// Auth インスタンス
+export const auth = getAuth(app);
 
 export default app;

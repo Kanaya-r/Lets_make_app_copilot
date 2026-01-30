@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { AppProvider } from "@/contexts/AppContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import "@/styles/globals.scss";
 
 export const metadata: Metadata = {
@@ -24,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body>
-        <AppProvider>{children}</AppProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

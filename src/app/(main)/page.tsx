@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useApp } from "@/contexts/AppContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Header } from "@/components/Header";
 import { formatCurrency } from "@/lib/exchange";
 import styles from "./page.module.scss";
@@ -15,7 +15,7 @@ export default function TopPage() {
     isRateError,
     isLoadingRate,
     refreshExchangeRate,
-  } = useApp();
+  } = useAuth();
 
   const hasSubscriptions = subscriptions.length > 0;
 

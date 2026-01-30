@@ -11,7 +11,11 @@
 - ✅ サブスク管理（CRUD）
 - ✅ 月額/年額の合計表示
 - ✅ USD→JPYリアルタイム換算（Frankfurter API）
-- ✅ 端末間データ同期（Firebase Firestore + 共有コード）
+- ✅ 端末間データ同期（Firebase Firestore）
+- ✅ **メール認証（Firebase Authentication）**
+- ✅ **親子アカウント共有モデル**
+  - オーナー（親）：共有コードを発行、子アカウントを管理
+  - メンバー（子）：共有コードでオーナーのデータに参加
 - ✅ スマホファーストUI（下部ナビ、FAB）
 - ✅ PWA対応
 
@@ -30,6 +34,7 @@
 | スタイリング | SCSS (CSS Modules) |
 | フォーム | React Hook Form + Zod |
 | 状態管理 | React Context |
+| 認証 | Firebase Authentication |
 | データベース | Firebase Firestore |
 | 為替API | Frankfurter API (ECB公式、キー不要) |
 | デプロイ | 静的エクスポート (さくらサーバー対応) |
@@ -47,9 +52,10 @@ npm install
 ### 2. Firebase設定
 
 1. [Firebase Console](https://console.firebase.google.com/) でプロジェクト作成
-2. Firestoreを有効化
-3. `.env.local.example` をコピーして `.env.local` を作成
-4. Firebase設定値を記入
+2. **Authentication を有効化**（メール/パスワード認証を有効にする）
+3. **Firestore を有効化**
+4. `.env.local.example` をコピーして `.env.local` を作成
+5. Firebase設定値を記入
 
 ```bash
 cp .env.local.example .env.local
@@ -72,8 +78,20 @@ Firebase Consoleで以下のルールを設定:
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{shareCode} {
-      allow read, write: if true;  // MVP用。本番では認証を追加
+    // ユーザープロファイル
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // 共有コードによる検索用
+      allow read: if request.auth != null;
+    }
+    
+    // 共有データ（サブスクリプションなど）
+    match /sharedData/{ownerId} {
+      allow read, write: if request.auth != null && (
+        request.auth.uid == ownerId ||
+        // 子アカウントからのアクセスを許可
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.parentUid == ownerId
+      );
     }
   }
 }
@@ -119,9 +137,17 @@ out/
 ```
 src/
 ├── app/                    # Next.js App Router
+│   ├── (auth)/            # 認証画面グループ
+│   │   ├── layout.tsx     # 認証レイアウト
+│   │   ├── login/
+│   │   │   └── page.tsx   # ログイン画面
+│   │   └── signup/
+│   │       └── page.tsx   # サインアップ画面
 │   ├── (main)/            # メインレイアウトグループ
 │   │   ├── layout.tsx     # メインレイアウト
 │   │   ├── page.tsx       # TOP画面
+│   │   ├── settings/
+│   │   │   └── page.tsx   # 設定画面
 │   │   └── subscriptions/
 │   │       └── page.tsx   # サブスク管理画面
 │   └── layout.tsx         # ルートレイアウト
@@ -130,21 +156,22 @@ src/
 │   ├── Header/
 │   ├── Modal/
 │   ├── Navigation/
-│   ├── ShareCodeSetup/
 │   ├── SubscriptionForm/
 │   └── Toast/
 ├── config/                # 設定ファイル
 │   ├── constants.ts       # 定数
 │   └── genres.ts          # ジャンル定義（拡張用）
 ├── contexts/              # React Context
-│   └── AppContext.tsx     # アプリ全体の状態管理
+│   └── AuthContext.tsx    # 認証・アプリ状態管理
 ├── lib/                   # ユーティリティ
+│   ├── auth.ts            # Firebase Auth操作
 │   ├── exchange.ts        # 為替レート取得
 │   ├── firebase.ts        # Firebase設定
-│   └── firestore.ts       # Firestoreデータ操作
+│   └── firestore-v2.ts    # Firestoreデータ操作
 ├── styles/                # グローバルスタイル
 │   ├── _variables.scss    # SCSS変数
 │   ├── _reset.scss        # リセットCSS
+│   ├── auth.module.scss   # 認証画面スタイル
 │   └── globals.scss       # グローバルスタイル
 └── types/                 # TypeScript型定義
     └── index.ts

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useApp } from "@/contexts/AppContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Header } from "@/components/Header";
 import { Modal } from "@/components/Modal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -18,7 +18,7 @@ export default function SubscriptionsPage() {
     getAmountInJpy,
     deleteExistingSubscription,
     isLoadingRate,
-  } = useApp();
+  } = useAuth();
 
   // モーダル状態
   const [isModalOpen, setIsModalOpen] = useState(false);

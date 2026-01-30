@@ -1,19 +1,33 @@
 "use client";
 
-import { useApp } from "@/contexts/AppContext";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import { Navigation } from "@/components/Navigation";
 import { ToastContainer } from "@/components/Toast";
-import { ShareCodeSetup } from "@/components/ShareCodeSetup";
 
 export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { shareCode, isLoadingShareCode } = useApp();
+  const router = useRouter();
+  const { isAuthenticated, isLoading, userProfile, acknowledgeShareRevoked } = useAuth();
+
+  // 未認証の場合はログインページへリダイレクト
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace("/login");
+    }
+  }, [isLoading, isAuthenticated, router]);
+
+  // 共有解除を確認
+  const handleAcknowledgeRevoked = async () => {
+    await acknowledgeShareRevoked();
+  };
 
   // ローディング中
-  if (isLoadingShareCode) {
+  if (isLoading) {
     return (
       <div
         style={{
@@ -31,14 +45,9 @@ export default function MainLayout({
     );
   }
 
-  // 共有コード未設定
-  if (!shareCode) {
-    return (
-      <>
-        <ShareCodeSetup />
-        <ToastContainer />
-      </>
-    );
+  // 未認証（リダイレクト待ち）
+  if (!isAuthenticated) {
+    return null;
   }
 
   // メイン画面
@@ -47,6 +56,35 @@ export default function MainLayout({
       <main className="main-content">{children}</main>
       <Navigation />
       <ToastContainer />
+
+      {/* 共有解除通知モーダル */}
+      {userProfile?.isShareRevoked && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div style={{ textAlign: "center", padding: "16px" }}>
+              <div style={{ fontSize: "48px", marginBottom: "16px" }}>⚠️</div>
+              <h2>共有が解除されました</h2>
+              <p style={{ color: "#666", marginTop: "8px" }}>
+                オーナーによって共有が解除されました。新しいデータベースが作成されます。
+              </p>
+              <button
+                onClick={handleAcknowledgeRevoked}
+                style={{
+                  marginTop: "24px",
+                  padding: "12px 32px",
+                  backgroundColor: "#3B82F6",
+                  color: "white",
+                  borderRadius: "8px",
+                  fontSize: "16px",
+                  fontWeight: "500",
+                }}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

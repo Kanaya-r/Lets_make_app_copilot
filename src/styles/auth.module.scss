@@ -7,7 +7,7 @@
   align-items: center;
   justify-content: center;
   padding: $spacing-lg;
-  text-align: center;
+  background-color: $bg-secondary;
 }
 
 .logo {
@@ -33,38 +33,45 @@
   border-radius: $border-radius-lg;
   padding: $spacing-lg;
   width: 100%;
-  max-width: 360px;
+  max-width: 400px;
   box-shadow: $shadow-md;
 }
 
-.sectionTitle {
-  font-size: $font-size-base;
-  font-weight: 600;
-  color: $text-primary;
-  margin-bottom: $spacing-md;
-}
-
-.description {
-  font-size: $font-size-sm;
-  color: $text-secondary;
-  margin-bottom: $spacing-md;
-}
-
-.inputGroup {
+.form {
   display: flex;
-  gap: $spacing-sm;
-  margin-bottom: $spacing-md;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.label {
+  font-size: $font-size-sm;
+  font-weight: 500;
+  color: $text-primary;
+}
+
+.required {
+  color: $error-color;
+  margin-left: 2px;
+}
+
+.optional {
+  color: $text-muted;
+  font-size: $font-size-xs;
+  margin-left: $spacing-xs;
 }
 
 .input {
-  flex: 1;
   padding: $spacing-md;
   border: 1px solid $border-color;
   border-radius: $border-radius;
-  font-size: $font-size-lg;
-  text-align: center;
-  letter-spacing: 2px;
-  text-transform: uppercase;
+  font-size: $font-size-base;
+  transition: border-color 0.2s, box-shadow 0.2s;
 
   &:focus {
     outline: none;
@@ -73,9 +80,27 @@
   }
 
   &::placeholder {
-    letter-spacing: normal;
-    text-transform: none;
+    color: $text-muted;
   }
+
+  &.error {
+    border-color: $error-color;
+
+    &:focus {
+      box-shadow: 0 0 0 3px rgba($error-color, 0.1);
+    }
+  }
+}
+
+.errorMessage {
+  font-size: $font-size-xs;
+  color: $error-color;
+}
+
+.hint {
+  font-size: $font-size-xs;
+  color: $text-muted;
+  margin-top: $spacing-xs;
 }
 
 .button {
@@ -86,6 +111,7 @@
   font-weight: 600;
   min-height: $tap-target-size;
   transition: all 0.2s;
+  margin-top: $spacing-md;
 
   &:disabled {
     opacity: 0.5;
@@ -99,15 +125,6 @@
 
   &:hover:not(:disabled) {
     background-color: $primary-dark;
-  }
-}
-
-.secondaryButton {
-  background-color: $bg-tertiary;
-  color: $text-secondary;
-
-  &:hover:not(:disabled) {
-    background-color: darken($bg-tertiary, 5%);
   }
 }
 
@@ -131,8 +148,27 @@
   }
 }
 
-.error {
+.linkText {
+  text-align: center;
+  font-size: $font-size-sm;
+  color: $text-secondary;
+
+  a {
+    color: $primary-color;
+    font-weight: 500;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.formError {
+  background-color: rgba($error-color, 0.1);
+  border: 1px solid $error-color;
+  border-radius: $border-radius;
+  padding: $spacing-md;
   color: $error-color;
   font-size: $font-size-sm;
-  margin-top: $spacing-sm;
+  text-align: center;
 }

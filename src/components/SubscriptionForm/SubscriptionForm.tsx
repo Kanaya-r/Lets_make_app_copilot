@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useApp } from "@/contexts/AppContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Subscription } from "@/types";
 import { CURRENCY_OPTIONS, PLAN_TYPE_OPTIONS } from "@/config/constants";
 import styles from "./SubscriptionForm.module.scss";
@@ -33,7 +33,7 @@ export function SubscriptionForm({
   subscription,
   onClose,
 }: SubscriptionFormProps) {
-  const { addNewSubscription, updateExistingSubscription } = useApp();
+  const { addNewSubscription, updateExistingSubscription } = useAuth();
 
   const {
     register,

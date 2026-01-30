@@ -1,10 +1,10 @@
 "use client";
 
-import { useApp } from "@/contexts/AppContext";
+import { useAuth } from "@/contexts/AuthContext";
 import styles from "./Toast.module.scss";
 
 export function ToastContainer() {
-  const { toasts, removeToast } = useApp();
+  const { toasts, removeToast } = useAuth();
 
   if (toasts.length === 0) return null;
 

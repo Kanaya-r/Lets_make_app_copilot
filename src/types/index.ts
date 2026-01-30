@@ -23,12 +23,35 @@ export interface ExchangeRateCache {
   timestamp: number;
 }
 
-// 共有コード用データ構造
-export interface UserData {
+// ユーザーアカウントタイプ
+export type AccountType = "parent" | "child";
+
+// ユーザープロファイル（Firestoreに保存）
+export interface UserProfile {
+  uid: string;
+  email: string;
+  accountType: AccountType;
+  shareCode: string; // 親: 自分の共有コード, 子: 親の共有コード
+  parentUid?: string; // 子アカウントの場合、親のUID
+  childUids: string[]; // 親アカウントの場合、子のUIDリスト
+  isShareRevoked?: boolean; // 共有が解除されたフラグ（子用）
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 共有データ（サブスクリプションなど）
+export interface SharedData {
   shareCode: string;
+  ownerUid: string;
   subscriptions: Subscription[];
   createdAt: string;
   updatedAt: string;
+}
+
+// 子アカウント情報（共有管理用）
+export interface ChildAccountInfo {
+  uid: string;
+  email: string;
 }
 
 // トースト通知の型
