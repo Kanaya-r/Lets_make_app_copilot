@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { HiHome } from "react-icons/hi";
 import { useAuth } from "@/contexts/AuthContext";
 import { APP_NAME } from "@/config/constants";
 import styles from "@/styles/auth.module.scss";
@@ -57,7 +58,7 @@ export default function LoginPage() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.logo}>🏠</div>
+      <div className={styles.logo}><HiHome /></div>
       <h1 className={styles.title}>{APP_NAME}</h1>
       <p className={styles.subtitle}>ログイン</p>
 
