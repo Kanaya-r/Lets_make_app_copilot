@@ -23,6 +23,7 @@ export default function SettingsPage() {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [showRevokeConfirm, setShowRevokeConfirm] = useState<string | null>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [shareCodeInput, setShareCodeInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -196,7 +197,7 @@ export default function SettingsPage() {
       </section>
 
       {/* ログアウトボタン */}
-      <button onClick={handleLogOutClick} className={styles.logoutButton}>
+      <button onClick={() => setShowLogoutConfirm(true)} className={styles.logoutButton}>
         ログアウト
       </button>
 
@@ -292,6 +293,31 @@ export default function SettingsPage() {
               disabled={isProcessing}
             >
               {isProcessing ? '処理中...' : '解除する'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ログアウト確認モーダル */}
+      <Modal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        title="ログアウト"
+      >
+        <div className={styles.modalForm}>
+          <p>ログアウトしますか？</p>
+          <div className={styles.modalButtons}>
+            <button
+              onClick={() => setShowLogoutConfirm(false)}
+              className={`${styles.modalButton} ${styles.secondaryButton}`}
+            >
+              キャンセル
+            </button>
+            <button
+              onClick={handleLogOutClick}
+              className={`${styles.modalButton} ${styles.dangerButton}`}
+            >
+              ログアウト
             </button>
           </div>
         </div>
