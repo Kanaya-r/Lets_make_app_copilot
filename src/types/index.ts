@@ -5,6 +5,7 @@ export interface Subscription {
   planType: "monthly" | "yearly";
   amount: number;
   currency: "JPY" | "USD";
+  isPaused?: boolean; // 一時除外フラグ
   createdAt: string;
   updatedAt: string;
 }
