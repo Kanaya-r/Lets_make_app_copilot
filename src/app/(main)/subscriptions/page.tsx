@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { HiCreditCard, HiPlay, HiPause, HiDotsVertical, HiPencil, HiTrash, HiPlus, HiArrowRight } from "react-icons/hi";
 import { useAuth } from "@/contexts/AuthContext";
 import { Header } from "@/components/Header";
 import { Modal } from "@/components/Modal";
@@ -121,7 +122,7 @@ export default function SubscriptionsPage() {
 
         {subscriptions.length === 0 ? (
           <div className={styles.emptyState}>
-            <div className={styles.emptyIcon}>💳</div>
+            <div className={styles.emptyIcon}><HiCreditCard /></div>
             <h3 className={styles.emptyTitle}>サブスクがありません</h3>
             <p className={styles.emptyDescription}>
               右下の「+」ボタンから
@@ -144,7 +145,7 @@ export default function SubscriptionsPage() {
                     </span>
                     <span className={styles.cardAmount}>
                       {getOriginalAmountDisplay(sub) && (
-                        <span>{getOriginalAmountDisplay(sub)} → </span>
+                        <span>{getOriginalAmountDisplay(sub)} <HiArrowRight className={styles.arrowIcon} /> </span>
                       )}
                       <span className={styles.cardAmountJpy}>
                         {formatCurrency(getAmountInJpy(sub))}
@@ -159,7 +160,7 @@ export default function SubscriptionsPage() {
                   aria-label={sub.isPaused ? "除外を解除" : "一時除外"}
                   title={sub.isPaused ? "除外を解除" : "一時除外"}
                 >
-                  {sub.isPaused ? "▶️" : "⏸️"}
+                  {sub.isPaused ? <HiPlay /> : <HiPause />}
                 </button>
 
                 <div className={styles.cardMenu} ref={menuRef}>
@@ -170,7 +171,7 @@ export default function SubscriptionsPage() {
                     }
                     aria-label="メニューを開く"
                   >
-                    ⋮
+                    <HiDotsVertical />
                   </button>
 
                   {openMenuId === sub.id && (
@@ -179,13 +180,13 @@ export default function SubscriptionsPage() {
                         className={styles.menuItem}
                         onClick={() => handleOpenModal(sub)}
                       >
-                        ✏️ 編集
+                        <HiPencil /> 編集
                       </button>
                       <button
                         className={`${styles.menuItem} ${styles.danger}`}
                         onClick={() => handleDelete(sub)}
                       >
-                        🗑️ 削除
+                        <HiTrash /> 削除
                       </button>
                     </div>
                   )}
@@ -202,7 +203,7 @@ export default function SubscriptionsPage() {
         onClick={() => handleOpenModal()}
         aria-label="新規登録"
       >
-        +
+        <HiPlus />
       </button>
 
       {/* 登録/編集モーダル */}
