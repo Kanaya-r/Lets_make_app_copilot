@@ -177,6 +177,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, [userProfile?.shareCode, subscriptionVersion]);
 
+  // 親アカウントの場合、childUidsが変更されたら子アカウント一覧を自動取得
+  useEffect(() => {
+    if (!userProfile || userProfile.accountType !== "parent") {
+      setChildAccounts([]);
+      return;
+    }
+
+    if (userProfile.childUids.length === 0) {
+      setChildAccounts([]);
+      return;
+    }
+
+    // childUidsから子アカウント情報を取得
+    getChildAccounts(userProfile.childUids)
+      .then((children) => {
+        setChildAccounts(children);
+      })
+      .catch((error) => {
+        console.error("Error loading child accounts:", error);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userProfile?.accountType, JSON.stringify(userProfile?.childUids)]);
+
   // サインアップ
   const handleSignUp = async (
     email: string,
