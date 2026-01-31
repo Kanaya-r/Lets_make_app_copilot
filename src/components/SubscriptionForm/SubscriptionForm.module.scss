@@ -33,7 +33,7 @@
   &:focus {
     outline: none;
     border-color: $primary-color;
-    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.08);
   }
 
   &::placeholder {
@@ -44,7 +44,7 @@
     border-color: $error-color;
 
     &:focus {
-      box-shadow: 0 0 0 3px rgba($error-color, 0.1);
+      box-shadow: 0 0 0 3px rgba($error-color, 0.08);
     }
   }
 }
@@ -129,7 +129,7 @@
   &:focus {
     outline: none;
     border-color: $primary-color;
-    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.08);
   }
 }
 
@@ -160,7 +160,7 @@
   color: $text-secondary;
 
   &:hover:not(:disabled) {
-    background-color: darken($bg-tertiary, 5%);
+    background-color: darken($bg-tertiary, 3%);
   }
 }
 

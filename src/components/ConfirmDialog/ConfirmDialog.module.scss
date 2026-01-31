@@ -6,7 +6,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -63,7 +63,7 @@
   color: $text-secondary;
 
   &:hover {
-    background-color: darken($bg-tertiary, 5%);
+    background-color: darken($bg-tertiary, 3%);
   }
 }
 
@@ -72,7 +72,7 @@
   color: white;
 
   &:hover {
-    background-color: darken($error-color, 10%);
+    background-color: darken($error-color, 8%);
   }
 }
 

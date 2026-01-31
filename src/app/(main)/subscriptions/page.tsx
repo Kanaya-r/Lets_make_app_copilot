@@ -143,7 +143,7 @@ export default function SubscriptionsPage() {
                 <div className={styles.cardMain}>
                   <div className={styles.cardName}>{sub.name}</div>
                   <div className={styles.cardMeta}>
-                    <span className={styles.cardPlanType}>
+                    <span className={`${styles.cardPlanType} ${sub.planType === 'monthly' ? styles.monthly : styles.yearly}`}>
                       {getPlanTypeLabel(sub.planType)}
                     </span>
                     <span className={styles.cardAmount}>
