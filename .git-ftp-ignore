@@ -1,0 +1,28 @@
+# git-ftpでアップロードしないファイル/ディレクトリを指定
+
+# ソースファイル
+src/
+public/
+
+# 設定ファイル
+.git/
+.gitignore
+.git-ftp-*
+node_modules/
+package.json
+package-lock.json
+tsconfig.json
+next.config.ts
+next-env.d.ts
+eslint.config.mjs
+README.md
+
+# Firebase関連
+firebase.json
+firestore.rules
+.firebaserc
+
+# その他
+*.log
+.DS_Store
+.env*

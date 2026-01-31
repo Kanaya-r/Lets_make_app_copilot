@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "deploy": "./deploy.sh push",
+    "deploy:init": "./deploy.sh init",
+    "deploy:catchup": "./deploy.sh catchup"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
