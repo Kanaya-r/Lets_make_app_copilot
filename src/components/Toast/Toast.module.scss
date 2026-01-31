@@ -1,0 +1,76 @@
+@use "@/styles/variables" as *;
+
+.toastContainer {
+  position: fixed;
+  top: $spacing-md;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  width: calc(100% - $spacing-md * 2);
+  max-width: 400px;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-md;
+  background-color: $bg-primary;
+  border-radius: $border-radius;
+  box-shadow: $shadow-lg;
+  animation: slideIn 0.3s ease;
+  pointer-events: auto;
+
+  &.success {
+    border-left: 4px solid $success-color;
+  }
+
+  &.error {
+    border-left: 4px solid $error-color;
+  }
+
+  &.info {
+    border-left: 4px solid $primary-color;
+  }
+}
+
+.icon {
+  font-size: $font-size-lg;
+  flex-shrink: 0;
+}
+
+.message {
+  flex: 1;
+  font-size: $font-size-sm;
+  color: $text-primary;
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: $text-muted;
+  font-size: $font-size-lg;
+  transition: color 0.2s;
+
+  &:hover {
+    color: $text-primary;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

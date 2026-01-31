@@ -1,0 +1,174 @@
+@use "@/styles/variables" as *;
+
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-lg;
+  background-color: $bg-secondary;
+}
+
+.logo {
+  font-size: 64px;
+  margin-bottom: $spacing-md;
+}
+
+.title {
+  font-size: $font-size-2xl;
+  font-weight: 700;
+  color: $text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.subtitle {
+  font-size: $font-size-sm;
+  color: $text-secondary;
+  margin-bottom: $spacing-xl;
+}
+
+.card {
+  background-color: $bg-primary;
+  border-radius: $border-radius-lg;
+  padding: $spacing-lg;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: $shadow-md;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.label {
+  font-size: $font-size-sm;
+  font-weight: 500;
+  color: $text-primary;
+}
+
+.required {
+  color: $error-color;
+  margin-left: 2px;
+}
+
+.optional {
+  color: $text-muted;
+  font-size: $font-size-xs;
+  margin-left: $spacing-xs;
+}
+
+.input {
+  padding: $spacing-md;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
+  font-size: $font-size-base;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+  }
+
+  &::placeholder {
+    color: $text-muted;
+  }
+
+  &.error {
+    border-color: $error-color;
+
+    &:focus {
+      box-shadow: 0 0 0 3px rgba($error-color, 0.1);
+    }
+  }
+}
+
+.errorMessage {
+  font-size: $font-size-xs;
+  color: $error-color;
+}
+
+.hint {
+  font-size: $font-size-xs;
+  color: $text-muted;
+  margin-top: $spacing-xs;
+}
+
+.button {
+  width: 100%;
+  padding: $spacing-md;
+  border-radius: $border-radius;
+  font-size: $font-size-base;
+  font-weight: 600;
+  min-height: $tap-target-size;
+  transition: all 0.2s;
+  margin-top: $spacing-md;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.primaryButton {
+  background-color: $primary-color;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background-color: $primary-dark;
+  }
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: $spacing-lg 0;
+
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: $border-color;
+  }
+
+  span {
+    padding: 0 $spacing-md;
+    font-size: $font-size-sm;
+    color: $text-muted;
+  }
+}
+
+.linkText {
+  text-align: center;
+  font-size: $font-size-sm;
+  color: $text-secondary;
+
+  a {
+    color: $primary-color;
+    font-weight: 500;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.formError {
+  background-color: rgba($error-color, 0.1);
+  border: 1px solid $error-color;
+  border-radius: $border-radius;
+  padding: $spacing-md;
+  color: $error-color;
+  font-size: $font-size-sm;
+  text-align: center;
+}

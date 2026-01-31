@@ -1,0 +1,174 @@
+@use "@/styles/variables" as *;
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.label {
+  font-size: $font-size-sm;
+  font-weight: 500;
+  color: $text-primary;
+}
+
+.required {
+  color: $error-color;
+  margin-left: 2px;
+}
+
+.input {
+  padding: $spacing-md;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
+  font-size: $font-size-base;
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+  }
+
+  &::placeholder {
+    color: $text-muted;
+  }
+
+  &.error {
+    border-color: $error-color;
+
+    &:focus {
+      box-shadow: 0 0 0 3px rgba($error-color, 0.1);
+    }
+  }
+}
+
+.errorMessage {
+  font-size: $font-size-xs;
+  color: $error-color;
+}
+
+// セグメントコントロール
+.segmentedControl {
+  display: flex;
+  background-color: $bg-secondary;
+  border-radius: $border-radius;
+  padding: 4px;
+}
+
+.segmentOption {
+  flex: 1;
+  position: relative;
+}
+
+.segmentInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+
+  &:checked + .segmentLabel {
+    background-color: $bg-primary;
+    color: $primary-color;
+    font-weight: 600;
+    box-shadow: $shadow-sm;
+  }
+
+  &:focus + .segmentLabel {
+    box-shadow: 0 0 0 2px $primary-color;
+  }
+}
+
+.segmentLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-md;
+  border-radius: calc($border-radius - 2px);
+  font-size: $font-size-sm;
+  color: $text-secondary;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: $tap-target-size;
+}
+
+// 金額入力行
+.amountRow {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.amountInput {
+  flex: 2;
+}
+
+.currencySelect {
+  flex: 1;
+}
+
+.select {
+  padding: $spacing-md;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
+  font-size: $font-size-base;
+  background-color: $bg-primary;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+  }
+}
+
+// ボタン
+.buttons {
+  display: flex;
+  gap: $spacing-sm;
+  margin-top: $spacing-md;
+}
+
+.button {
+  flex: 1;
+  padding: $spacing-md;
+  border-radius: $border-radius;
+  font-size: $font-size-base;
+  font-weight: 500;
+  min-height: $tap-target-size;
+  transition: all 0.2s;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.cancelButton {
+  background-color: $bg-tertiary;
+  color: $text-secondary;
+
+  &:hover:not(:disabled) {
+    background-color: darken($bg-tertiary, 5%);
+  }
+}
+
+.submitButton {
+  background-color: $primary-color;
+  color: white;
+
+  &:hover:not(:disabled) {
+    background-color: $primary-dark;
+  }
+}

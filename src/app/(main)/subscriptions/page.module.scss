@@ -1,0 +1,293 @@
+@use "@/styles/variables" as *;
+
+.page {
+  min-height: 100%;
+}
+
+.summarySection {
+  margin-bottom: $spacing-lg;
+}
+
+.summaryCard {
+  background-color: $bg-primary;
+  border-radius: $border-radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-sm;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-md;
+}
+
+.summaryItem {
+  text-align: center;
+  padding: $spacing-md;
+  background-color: $bg-secondary;
+  border-radius: $border-radius;
+}
+
+.summaryLabel {
+  font-size: $font-size-xs;
+  color: $text-muted;
+  margin-bottom: $spacing-xs;
+}
+
+.summaryValue {
+  font-size: $font-size-xl;
+  font-weight: 700;
+  color: $text-primary;
+
+  &.highlight {
+    color: $primary-color;
+  }
+}
+
+.listSection {
+  margin-bottom: $spacing-lg;
+}
+
+.listHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+}
+
+.listTitle {
+  font-size: $font-size-base;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.listCount {
+  font-size: $font-size-sm;
+  color: $text-muted;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+// サブスクカード
+.card {
+  background-color: $bg-primary;
+  border-radius: $border-radius;
+  padding: $spacing-md;
+  box-shadow: $shadow-sm;
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  transition: opacity 0.2s, background-color 0.2s;
+
+  &.paused {
+    opacity: 0.5;
+    background-color: $bg-secondary;
+
+    .cardName,
+    .cardAmountJpy {
+      color: $text-muted;
+    }
+  }
+}
+
+.cardMain {
+  flex: 1;
+  min-width: 0;
+}
+
+// 一時除外ボタン
+.pauseButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: $font-size-lg;
+  transition: all 0.2s;
+  background-color: transparent;
+  flex-shrink: 0;
+
+  &:hover {
+    background-color: $bg-secondary;
+  }
+
+  &.active {
+    background-color: $primary-color;
+    color: white;
+
+    &:hover {
+      background-color: $primary-dark;
+    }
+  }
+}
+
+.cardName {
+  font-size: $font-size-base;
+  font-weight: 600;
+  color: $text-primary;
+  margin-bottom: $spacing-xs;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  font-size: $font-size-sm;
+}
+
+.cardPlanType {
+  padding: 2px $spacing-sm;
+  background-color: $bg-secondary;
+  border-radius: 4px;
+  font-size: $font-size-xs;
+  color: $text-secondary;
+}
+
+.cardAmount {
+  color: $text-secondary;
+}
+
+.cardAmountJpy {
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.cardMenu {
+  position: relative;
+}
+
+.menuButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: $tap-target-size;
+  height: $tap-target-size;
+  color: $text-muted;
+  font-size: $font-size-lg;
+  border-radius: $border-radius;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: $bg-secondary;
+    color: $text-secondary;
+  }
+}
+
+.menuDropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: $bg-primary;
+  border-radius: $border-radius;
+  box-shadow: $shadow-lg;
+  min-width: 120px;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  width: 100%;
+  padding: $spacing-md;
+  font-size: $font-size-sm;
+  color: $text-primary;
+  text-align: left;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: $bg-secondary;
+  }
+
+  &.danger {
+    color: $error-color;
+  }
+}
+
+// 空状態
+.emptyState {
+  text-align: center;
+  padding: $spacing-2xl $spacing-lg;
+  background-color: $bg-primary;
+  border-radius: $border-radius-lg;
+}
+
+.emptyIcon {
+  font-size: 64px;
+  margin-bottom: $spacing-md;
+}
+
+.emptyTitle {
+  font-size: $font-size-lg;
+  font-weight: 600;
+  color: $text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.emptyDescription {
+  font-size: $font-size-sm;
+  color: $text-secondary;
+  margin-bottom: $spacing-lg;
+}
+
+// FAB（フローティングアクションボタン）
+.fab {
+  position: fixed;
+  bottom: calc($nav-height + $spacing-lg);
+  right: $spacing-md;
+  width: 56px;
+  height: 56px;
+  background-color: $primary-color;
+  color: white;
+  border-radius: 50%;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: $shadow-lg;
+  transition: all 0.2s;
+  z-index: 50;
+
+  &:hover {
+    background-color: $primary-dark;
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// スケルトン
+.skeletonCard {
+  background-color: $bg-primary;
+  border-radius: $border-radius;
+  padding: $spacing-md;
+  height: 72px;
+}
+
+.skeletonSummary {
+  background-color: $bg-primary;
+  border-radius: $border-radius-lg;
+  padding: $spacing-lg;
+  
+  .skeletonGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-md;
+  }
+
+  .skeletonItem {
+    height: 80px;
+    border-radius: $border-radius;
+  }
+}

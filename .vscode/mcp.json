@@ -1,0 +1,21 @@
+{
+  "servers": {
+    "oraios/serena": {
+      "type": "stdio",
+      "command": "/Users/kanaya.r/.local/bin/uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server",
+        "--project",
+        "${workspaceFolder}",
+        "--context",
+        "claude-code"
+      ],
+      "gallery": "https://api.mcp.github.com",
+      "version": "1.0.0"
+    }
+  },
+  "inputs": []
+}
