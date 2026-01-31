@@ -76,7 +76,7 @@
   &:focus {
     outline: none;
     border-color: $primary-color;
-    box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.08);
   }
 
   &::placeholder {
@@ -87,7 +87,7 @@
     border-color: $error-color;
 
     &:focus {
-      box-shadow: 0 0 0 3px rgba($error-color, 0.1);
+      box-shadow: 0 0 0 3px rgba($error-color, 0.08);
     }
   }
 }
@@ -164,8 +164,8 @@
 }
 
 .formError {
-  background-color: rgba($error-color, 0.1);
-  border: 1px solid $error-color;
+  background-color: rgba($error-color, 0.08);
+  border: 1px solid rgba($error-color, 0.3);
   border-radius: $border-radius;
   padding: $spacing-md;
   color: $error-color;
