@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { HiExclamation } from 'react-icons/hi';
 import { useAuth } from '@/contexts/AuthContext';
+import { Modal } from '@/components/Modal';
 import styles from './page.module.scss';
 
 export default function SettingsPage() {
@@ -16,11 +18,15 @@ export default function SettingsPage() {
     leaveShare,
     revokeChildAccess,
     childAccounts,
+    enableSharePermission,
+    isSharePermissionActive,
+    sharePermissionRemainingTime,
   } = useAuth();
 
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [showRevokeConfirm, setShowRevokeConfirm] = useState<string | null>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [shareCodeInput, setShareCodeInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -134,6 +140,33 @@ export default function SettingsPage() {
               </p>
             </div>
 
+            {/* 共有登録許可ボタン */}
+            <div className={styles.sharePermission}>
+              {isSharePermissionActive ? (
+                <div className={styles.permissionActive}>
+                  <span className={styles.permissionStatus}>
+                    共有登録受付中
+                  </span>
+                  {typeof sharePermissionRemainingTime === 'number' && sharePermissionRemainingTime > 0 && (
+                    <span className={styles.permissionTimer}>
+                      残り {Math.floor(sharePermissionRemainingTime / 60)}分{sharePermissionRemainingTime % 60}秒
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={enableSharePermission}
+                  className={`${styles.button} ${styles.primaryButton}`}
+                  disabled={isProcessing}
+                >
+                  共有登録を許可（5分間）
+                </button>
+              )}
+              <p className={styles.shareCodeHint}>
+                新規メンバーの登録を受け付けるにはこのボタンを押してください
+              </p>
+            </div>
+
             {/* 子アカウント一覧 */}
             {childAccounts.length > 0 && (
               <div className={styles.childList}>
@@ -194,106 +227,131 @@ export default function SettingsPage() {
       </section>
 
       {/* ログアウトボタン */}
-      <button onClick={handleLogOutClick} className={styles.logoutButton}>
+      <button onClick={() => setShowLogoutConfirm(true)} className={styles.logoutButton}>
         ログアウト
       </button>
 
       {/* 共有参加モーダル */}
-      {showJoinModal && (
-        <div className="modal-overlay" onClick={() => setShowJoinModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>共有に参加</h2>
-            <div className={styles.modalForm}>
-              <div className={styles.warning}>
-                ⚠️ 注意: 共有に参加すると、現在のデータは新しいオーナーのデータに置き換わります
-              </div>
-              <input
-                type="text"
-                value={shareCodeInput}
-                onChange={(e) => setShareCodeInput(e.target.value.toUpperCase())}
-                placeholder="共有コードを入力"
-                className={styles.modalInput}
-                maxLength={8}
-              />
-              <div className={styles.modalButtons}>
-                <button
-                  onClick={() => {
-                    setShowJoinModal(false);
-                    setShareCodeInput('');
-                  }}
-                  className={`${styles.modalButton} ${styles.secondaryButton}`}
-                  disabled={isProcessing}
-                >
-                  キャンセル
-                </button>
-                <button
-                  onClick={handleJoinShare}
-                  className={`${styles.modalButton} ${styles.primaryButton}`}
-                  disabled={isProcessing || !shareCodeInput.trim()}
-                >
-                  {isProcessing ? '処理中...' : '参加する'}
-                </button>
-              </div>
-            </div>
+      <Modal
+        isOpen={showJoinModal}
+        onClose={() => {
+          setShowJoinModal(false);
+          setShareCodeInput('');
+        }}
+        title="共有に参加"
+      >
+        <div className={styles.modalForm}>
+          <div className={styles.warning}>
+            <HiExclamation /> 注意: 共有に参加すると、現在のデータは新しいオーナーのデータに置き換わります
+          </div>
+          <input
+            type="text"
+            value={shareCodeInput}
+            onChange={(e) => setShareCodeInput(e.target.value.toUpperCase())}
+            placeholder="共有コードを入力"
+            className={styles.modalInput}
+            maxLength={10}
+          />
+          <div className={styles.modalButtons}>
+            <button
+              onClick={() => {
+                setShowJoinModal(false);
+                setShareCodeInput('');
+              }}
+              className={`${styles.modalButton} ${styles.secondaryButton}`}
+              disabled={isProcessing}
+            >
+              キャンセル
+            </button>
+            <button
+              onClick={handleJoinShare}
+              className={`${styles.modalButton} ${styles.primaryButton}`}
+              disabled={isProcessing || !shareCodeInput.trim()}
+            >
+              {isProcessing ? '処理中...' : '参加する'}
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
 
       {/* 共有離脱確認モーダル */}
-      {showLeaveConfirm && (
-        <div className="modal-overlay" onClick={() => setShowLeaveConfirm(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>共有から離脱</h2>
-            <div className={styles.modalForm}>
-              <p>共有から離脱すると、新しい空のデータベースが作成されます。共有元のデータは引き継がれません。</p>
-              <div className={styles.modalButtons}>
-                <button
-                  onClick={() => setShowLeaveConfirm(false)}
-                  className={`${styles.modalButton} ${styles.secondaryButton}`}
-                  disabled={isProcessing}
-                >
-                  キャンセル
-                </button>
-                <button
-                  onClick={handleLeaveShare}
-                  className={`${styles.modalButton} ${styles.dangerButton}`}
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? '処理中...' : '離脱する'}
-                </button>
-              </div>
-            </div>
+      <Modal
+        isOpen={showLeaveConfirm}
+        onClose={() => setShowLeaveConfirm(false)}
+        title="共有から離脱"
+      >
+        <div className={styles.modalForm}>
+          <p>共有から離脱すると、新しい空のデータベースが作成されます。共有元のデータは引き継がれません。</p>
+          <div className={styles.modalButtons}>
+            <button
+              onClick={() => setShowLeaveConfirm(false)}
+              className={`${styles.modalButton} ${styles.secondaryButton}`}
+              disabled={isProcessing}
+            >
+              キャンセル
+            </button>
+            <button
+              onClick={handleLeaveShare}
+              className={`${styles.modalButton} ${styles.dangerButton}`}
+              disabled={isProcessing}
+            >
+              {isProcessing ? '処理中...' : '離脱する'}
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
 
       {/* 子アカウント解除確認モーダル */}
-      {showRevokeConfirm && (
-        <div className="modal-overlay" onClick={() => setShowRevokeConfirm(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>共有を解除</h2>
-            <div className={styles.modalForm}>
-              <p>このユーザーとの共有を解除します。解除されたユーザーには新しい空のデータベースが作成されます。</p>
-              <div className={styles.modalButtons}>
-                <button
-                  onClick={() => setShowRevokeConfirm(null)}
-                  className={`${styles.modalButton} ${styles.secondaryButton}`}
-                  disabled={isProcessing}
-                >
-                  キャンセル
-                </button>
-                <button
-                  onClick={() => handleRevokeChild(showRevokeConfirm)}
-                  className={`${styles.modalButton} ${styles.dangerButton}`}
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? '処理中...' : '解除する'}
-                </button>
-              </div>
-            </div>
+      <Modal
+        isOpen={!!showRevokeConfirm}
+        onClose={() => setShowRevokeConfirm(null)}
+        title="共有を解除"
+      >
+        <div className={styles.modalForm}>
+          <p>このユーザーとの共有を解除します。解除されたユーザーには新しい空のデータベースが作成されます。</p>
+          <div className={styles.modalButtons}>
+            <button
+              onClick={() => setShowRevokeConfirm(null)}
+              className={`${styles.modalButton} ${styles.secondaryButton}`}
+              disabled={isProcessing}
+            >
+              キャンセル
+            </button>
+            <button
+              onClick={() => showRevokeConfirm && handleRevokeChild(showRevokeConfirm)}
+              className={`${styles.modalButton} ${styles.dangerButton}`}
+              disabled={isProcessing}
+            >
+              {isProcessing ? '処理中...' : '解除する'}
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
+
+      {/* ログアウト確認モーダル */}
+      <Modal
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        title="ログアウト"
+      >
+        <div className={styles.modalForm}>
+          <p>ログアウトしますか？</p>
+          <div className={styles.modalButtons}>
+            <button
+              onClick={() => setShowLogoutConfirm(false)}
+              className={`${styles.modalButton} ${styles.secondaryButton}`}
+            >
+              キャンセル
+            </button>
+            <button
+              onClick={handleLogOutClick}
+              className={`${styles.modalButton} ${styles.dangerButton}`}
+            >
+              ログアウト
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

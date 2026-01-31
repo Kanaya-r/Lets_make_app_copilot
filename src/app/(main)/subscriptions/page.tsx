@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { HiCreditCard, HiPlay, HiPause, HiDotsVertical, HiPencil, HiTrash, HiPlus, HiArrowRight } from "react-icons/hi";
 import { useAuth } from "@/contexts/AuthContext";
 import { Header } from "@/components/Header";
@@ -32,19 +32,22 @@ export default function SubscriptionsPage() {
 
   // メニュー状態
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   // メニュー外クリックで閉じる
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpenMenuId(null);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+  const handleClickOutside = useCallback((e: MouseEvent) => {
+    const target = e.target as HTMLElement;
+    // メニューボタンまたはドロップダウン内のクリックでなければ閉じる
+    if (!target.closest(`.${styles.cardMenu}`)) {
+      setOpenMenuId(null);
+    }
   }, []);
+
+  useEffect(() => {
+    if (openMenuId) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [openMenuId, handleClickOutside]);
 
   const handleOpenModal = (subscription?: Subscription) => {
     setEditingSubscription(subscription || null);
@@ -163,12 +166,13 @@ export default function SubscriptionsPage() {
                   {sub.isPaused ? <HiPlay /> : <HiPause />}
                 </button>
 
-                <div className={styles.cardMenu} ref={menuRef}>
+                <div className={styles.cardMenu}>
                   <button
                     className={styles.menuButton}
-                    onClick={() =>
-                      setOpenMenuId(openMenuId === sub.id ? null : sub.id)
-                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setOpenMenuId(openMenuId === sub.id ? null : sub.id);
+                    }}
                     aria-label="メニューを開く"
                   >
                     <HiDotsVertical />
@@ -178,13 +182,19 @@ export default function SubscriptionsPage() {
                     <div className={styles.menuDropdown}>
                       <button
                         className={styles.menuItem}
-                        onClick={() => handleOpenModal(sub)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenModal(sub);
+                        }}
                       >
                         <HiPencil /> 編集
                       </button>
                       <button
                         className={`${styles.menuItem} ${styles.danger}`}
-                        onClick={() => handleDelete(sub)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(sub);
+                        }}
                       >
                         <HiTrash /> 削除
                       </button>

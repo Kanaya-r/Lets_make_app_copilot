@@ -1,0 +1,109 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ヘルパー関数: 認証済みかどうか
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // ヘルパー関数: 自分自身のドキュメントかどうか
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // ヘルパー関数: 現在のユーザーのプロファイルを取得
+    function getUserProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    // ヘルパー関数: 対象ユーザーのプロファイルを取得
+    function getTargetUserProfile(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+    
+    // ヘルパー関数: 共有コードでアクセス可能か（自分の共有コードと一致）
+    function hasAccessToShareCode(shareCode) {
+      return isAuthenticated() && getUserProfile().shareCode == shareCode;
+    }
+    
+    // ヘルパー関数: 共有データのオーナーか
+    function isSharedDataOwner(shareCode) {
+      return isAuthenticated() && 
+        exists(/databases/$(database)/documents/sharedData/$(shareCode)) &&
+        get(/databases/$(database)/documents/sharedData/$(shareCode)).data.ownerUid == request.auth.uid;
+    }
+    
+    // ヘルパー関数: 親アカウントが子アカウントを管理できるか
+    function canManageChild(childUid) {
+      return isAuthenticated() && 
+        getUserProfile().accountType == 'parent' &&
+        childUid in getUserProfile().childUids;
+    }
+    
+    // ヘルパー関数: 共有登録が許可されているか（shareAllowedUntilが現在時刻より未来）
+    function isShareRegistrationAllowed(parentProfile) {
+      return parentProfile.shareAllowedUntil != null &&
+        timestamp.value(parentProfile.shareAllowedUntil) > request.time;
+    }
+    
+    // ========================================
+    // users コレクション
+    // ========================================
+    match /users/{userId} {
+      // 読み取り: 
+      // - 自分自身のプロファイル
+      // - 親が自分の子アカウントのプロファイルを読む
+      // - 親アカウントのプロファイルを読む（共有コード検索用）
+      allow read: if isOwner(userId) ||
+        canManageChild(userId) ||
+        (isAuthenticated() && resource.data.accountType == 'parent');
+      
+      // 作成: 認証済みで自分のUIDと一致
+      // セキュリティ: childUidsは空リストで開始、shareCodeは検証済み
+      allow create: if isOwner(userId) &&
+        request.resource.data.uid == userId &&
+        request.resource.data.email == request.auth.token.email &&
+        request.resource.data.accountType in ['parent', 'child'] &&
+        request.resource.data.shareCode is string &&
+        request.resource.data.childUids is list &&
+        request.resource.data.childUids.size() == 0;
+      
+      // 更新: 自分自身のプロファイルのみ
+      // セキュリティ: uid, email, accountType, childUidsは変更不可
+      // shareCodeの変更は、shareAllowedUntilの更新のみ許可
+      allow update: if isOwner(userId) &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.accountType == resource.data.accountType &&
+        request.resource.data.shareCode == resource.data.shareCode &&
+        request.resource.data.childUids == resource.data.childUids;
+      
+      // 削除: 禁止（アカウント削除は別途管理）
+      allow delete: if false;
+    }
+    
+    // ========================================
+    // sharedData コレクション
+    // ========================================
+    match /sharedData/{shareCode} {
+      // 読み取り: 同じ共有コードを持つユーザー
+      allow read: if hasAccessToShareCode(shareCode);
+      
+      // 作成: 認証済みで、ownerUidが自分自身
+      allow create: if isAuthenticated() &&
+        request.resource.data.ownerUid == request.auth.uid &&
+        request.resource.data.shareCode == shareCode &&
+        request.resource.data.subscriptions is list;
+      
+      // 更新: 同じ共有コードを持つユーザー（親または子）
+      // subscriptions配列の更新のみ許可
+      allow update: if hasAccessToShareCode(shareCode) &&
+        request.resource.data.ownerUid == resource.data.ownerUid &&
+        request.resource.data.shareCode == resource.data.shareCode;
+      
+      // 削除: オーナーのみ
+      allow delete: if isSharedDataOwner(shareCode);
+    }
+  }
+}

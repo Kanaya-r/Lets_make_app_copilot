@@ -36,6 +36,7 @@ export interface UserProfile {
   parentUid?: string; // 子アカウントの場合、親のUID
   childUids: string[]; // 親アカウントの場合、子のUIDリスト
   isShareRevoked?: boolean; // 共有が解除されたフラグ（子用）
+  shareAllowedUntil?: string; // 共有登録許可の有効期限（ISO timestamp）
   createdAt: string;
   updatedAt: string;
 }

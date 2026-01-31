@@ -164,6 +164,36 @@
   color: $text-secondary;
 }
 
+// 共有登録許可
+.sharePermission {
+  text-align: center;
+  padding: $spacing-lg;
+  border-top: 1px solid $border-color;
+}
+
+.permissionActive {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.permissionStatus {
+  font-size: $font-size-base;
+  font-weight: 600;
+  color: $success-color;
+  padding: $spacing-sm $spacing-md;
+  background-color: rgba($success-color, 0.1);
+  border-radius: $border-radius;
+}
+
+.permissionTimer {
+  font-size: $font-size-lg;
+  font-weight: 700;
+  font-family: monospace;
+  color: $primary-color;
+}
+
 // 子アカウントリスト
 .childList {
   padding: 0;
