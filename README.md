@@ -29,15 +29,15 @@
 
 | カテゴリ | 技術 |
 |---------|------|
-| フレームワーク | Next.js 16 (App Router) |
-| 言語 | TypeScript |
+| フレームワーク | Next.js 16.1.6 (App Router) |
+| 言語 | TypeScript 5 |
 | スタイリング | SCSS (CSS Modules) |
-| フォーム | React Hook Form + Zod |
-| 状態管理 | React Context |
+| フォーム | React Hook Form 7 + Zod 4 |
+| 状態管理 | React 19 Context |
 | 認証 | Firebase Authentication |
 | データベース | Firebase Firestore |
 | 為替API | Frankfurter API (ECB公式、キー不要) |
-| デプロイ | 静的エクスポート (さくらサーバー対応) |
+| デプロイ | git-ftp |
 
 ---
 
@@ -57,10 +57,6 @@ npm install
 4. `.env.local.example` をコピーして `.env.local` を作成
 5. Firebase設定値を記入
 
-```bash
-cp .env.local.example .env.local
-```
-
 ```env
 NEXT_PUBLIC_FIREBASE_API_KEY=your-api-key
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
@@ -72,30 +68,15 @@ NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
 
 ### 3. Firestoreセキュリティルール
 
-Firebase Consoleで以下のルールを設定:
+プロジェクトに含まれる `firestore.rules` をFirebase Consoleでデプロイするか、内容をコピーして設定してください。
 
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // ユーザープロファイル
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      // 共有コードによる検索用
-      allow read: if request.auth != null;
-    }
-    
-    // 共有データ（サブスクリプションなど）
-    match /sharedData/{ownerId} {
-      allow read, write: if request.auth != null && (
-        request.auth.uid == ownerId ||
-        // 子アカウントからのアクセスを許可
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.parentUid == ownerId
-      );
-    }
-  }
-}
-```
+主な機能:
+- ユーザープロファイルの読み書き制御
+- 親子アカウント間のアクセス管理
+- 共有コードベースのデータアクセス
+- 共有登録の時限許可（5分間）
+
+詳細は [firestore.rules](firestore.rules) を参照してください。
 
 ### 4. 開発サーバー起動
 
@@ -107,28 +88,32 @@ http://localhost:3000 でアクセス
 
 ---
 
-## デプロイ手順（さくらサーバー）
+## デプロイ手順
 
-### 1. ビルド
+git-ftpを使用した自動デプロイに対応しています。詳細は [docs/GIT-FTP-DEPLOY.md](docs/GIT-FTP-DEPLOY.md) を参照してください。
+
+### 初回セットアップ
 
 ```bash
-npm run build
+# git-ftpインストール（macOS）
+brew install git-ftp
+
+# FTP設定ファイル作成
+cp .git-ftp-config.example .git-ftp-config
+# .git-ftp-config を編集してFTP接続情報を設定
+
+# 初回デプロイ
+npm run deploy:init
 ```
 
-`out/` ディレクトリに静的ファイルが生成されます。
+### 通常デプロイ
 
-### 2. アップロード
-
-`out/` ディレクトリの内容をさくらサーバーにFTPでアップロード。
-
+```bash
+# mainブランチでビルド＆デプロイ
+npm run deploy
 ```
-out/
-├── index.html
-├── subscriptions/
-├── _next/
-├── manifest.json
-└── ...
-```
+
+`out/` ディレクトリに静的ファイルが生成され、git-ftpでサーバーにアップロードされます。
 
 ---
 
@@ -190,14 +175,14 @@ export const genres: Genre[] = [
   {
     id: "subscriptions",
     name: "サブスク",
-    icon: "💳",
+    iconName: "creditCard",
     path: "/subscriptions",
   },
   // 新規追加
   {
     id: "appliances",
     name: "家電",
-    icon: "🔌",
+    iconName: "plug",
     path: "/appliances",
   },
 ];
@@ -213,7 +198,7 @@ export const genres: Genre[] = [
 
 ### 4. Firestoreサービスを拡張
 
-`src/lib/firestore.ts` にCRUD関数を追加
+`src/lib/firestore-v2.ts` にCRUD関数を追加
 
 ---
 
