@@ -103,6 +103,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 共有管理
   const [childAccounts, setChildAccounts] = useState<ChildAccountInfo[]>([]);
 
+  // 購読再開始用のカウンター（プロファイル作成時に強制的に再購読させる）
+  const [subscriptionVersion, setSubscriptionVersion] = useState(0);
+
   // トースト
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -163,6 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   // 共有データのリアルタイム購読
+  // subscriptionVersionを依存配列に追加し、プロファイル作成後に強制的に再購読させる
   useEffect(() => {
     if (!userProfile?.shareCode) return;
 
@@ -173,7 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [userProfile?.shareCode]);
+  }, [userProfile?.shareCode, subscriptionVersion]);
 
   // サインアップ
   const handleSignUp = async (
@@ -182,23 +186,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     shareCode?: string
   ) => {
     try {
+      // 共有コードが入力されている場合、アカウント作成前に検証する
+      let parentProfile: UserProfile | null = null;
+      if (shareCode) {
+        parentProfile = await findParentByShareCode(shareCode);
+        if (!parentProfile) {
+          throw new Error("共有コードが無効か、共有登録が許可されていません");
+        }
+      }
+
+      // 共有コードの検証が成功した後にアカウントを作成
       const authUser = await signUp(email, password);
 
       let profile: UserProfile;
 
-      if (shareCode) {
-        // 共有コードが入力されている場合、子アカウントとして登録
-        const parentProfile = await findParentByShareCode(shareCode);
-        if (!parentProfile) {
-          throw new Error("共有コードが見つかりません");
-        }
+      if (shareCode && parentProfile) {
+        // 子アカウントとして登録
         profile = await createChildProfile(authUser.uid, email, parentProfile);
       } else {
-        // 共有コード未入力の場合、親アカウントとして登録
+        // 親アカウントとして登録
         profile = await createParentProfile(authUser.uid, email);
       }
 
       setUserProfile(profile);
+      // 購読を強制的に再開始させる
+      setSubscriptionVersion((v) => v + 1);
       showToast("success", "アカウントを作成しました");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "登録に失敗しました";
