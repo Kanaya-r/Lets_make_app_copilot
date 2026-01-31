@@ -11,6 +11,15 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# mainブランチチェック
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [ "$CURRENT_BRANCH" != "main" ]; then
+    echo -e "${RED}エラー: デプロイはmainブランチでのみ実行できます${NC}"
+    echo -e "${RED}現在のブランチ: ${CURRENT_BRANCH}${NC}"
+    echo -e "${YELLOW}ヒント: git checkout main でmainブランチに切り替えてください${NC}"
+    exit 1
+fi
+
 echo -e "${YELLOW}=== git-ftp デプロイスクリプト ===${NC}"
 
 # 設定ファイルの読み込み
