@@ -1,6 +1,8 @@
 @use "reset";
 @use "variables" as *;
 
+@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap');
+
 // メインレイアウト
 .app-layout {
   min-height: 100vh;
@@ -28,7 +30,7 @@
   background: linear-gradient(
     90deg,
     $bg-tertiary 0px,
-    darken($bg-tertiary, 5%) 40px,
+    darken($bg-tertiary, 3%) 40px,
     $bg-tertiary 80px
   );
   background-size: 200px 100%;
