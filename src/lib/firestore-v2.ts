@@ -18,18 +18,20 @@ import {
   SharedData,
   ChildAccountInfo,
 } from "@/types";
-import { SHARE_CODE_LENGTH } from "@/config/constants";
+import { SHARE_CODE_LENGTH, SHARE_PERMISSION_DURATION } from "@/config/constants";
 
 // コレクション名
 const USERS_COLLECTION = "users";
 const SHARED_DATA_COLLECTION = "sharedData";
 
-// 共有コード生成
+// 共有コード生成（暗号学的に安全な乱数を使用）
 export function generateShareCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const array = new Uint32Array(SHARE_CODE_LENGTH);
+  crypto.getRandomValues(array);
   let code = "";
   for (let i = 0; i < SHARE_CODE_LENGTH; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+    code += chars.charAt(array[i] % chars.length);
   }
   return code;
 }
@@ -52,6 +54,7 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
 }
 
 // 共有コードでユーザープロファイルを検索（親アカウントのみ）
+// 共有登録が許可されている場合のみ返す
 export async function findParentByShareCode(
   shareCode: string
 ): Promise<UserProfile | null> {
@@ -63,13 +66,52 @@ export async function findParentByShareCode(
     );
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
-      return querySnapshot.docs[0].data() as UserProfile;
+      const parentProfile = querySnapshot.docs[0].data() as UserProfile;
+      
+      // 共有登録が許可されているかチェック
+      if (!isShareRegistrationAllowed(parentProfile)) {
+        return null;
+      }
+      
+      return parentProfile;
     }
     return null;
   } catch (error) {
     console.error("Error finding parent by share code:", error);
     throw error;
   }
+}
+
+// 共有登録が許可されているかチェック
+export function isShareRegistrationAllowed(profile: UserProfile): boolean {
+  if (!profile.shareAllowedUntil) {
+    return false;
+  }
+  const allowedUntil = new Date(profile.shareAllowedUntil);
+  return allowedUntil > new Date();
+}
+
+// 共有登録を許可（5分間有効）
+export async function enableShareRegistration(uid: string): Promise<string> {
+  const now = new Date();
+  const allowedUntil = new Date(now.getTime() + SHARE_PERMISSION_DURATION);
+  
+  const docRef = doc(db, USERS_COLLECTION, uid);
+  await updateDoc(docRef, {
+    shareAllowedUntil: allowedUntil.toISOString(),
+    updatedAt: now.toISOString(),
+  });
+  
+  return allowedUntil.toISOString();
+}
+
+// 共有登録許可を取り消し
+export async function disableShareRegistration(uid: string): Promise<void> {
+  const docRef = doc(db, USERS_COLLECTION, uid);
+  await updateDoc(docRef, {
+    shareAllowedUntil: null,
+    updatedAt: new Date().toISOString(),
+  });
 }
 
 // 親アカウントとしてユーザープロファイルを作成
@@ -252,14 +294,10 @@ export async function addSubscription(
   shareCode: string,
   subscription: Subscription
 ): Promise<void> {
-  console.log("addSubscription called with shareCode:", shareCode);
-  
   let sharedData = await getSharedData(shareCode);
-  console.log("getSharedData result:", sharedData);
   
   // sharedDataが存在しない場合は自動作成
   if (!sharedData) {
-    console.log("Creating new sharedData for shareCode:", shareCode);
     sharedData = await createSharedData(shareCode, shareCode); // ownerUidは後で修正される
   }
 
@@ -269,7 +307,6 @@ export async function addSubscription(
     subscriptions: updatedSubscriptions,
     updatedAt: new Date().toISOString(),
   });
-  console.log("Subscription added successfully");
 }
 
 // サブスクリプションを更新

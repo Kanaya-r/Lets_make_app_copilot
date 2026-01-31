@@ -33,6 +33,7 @@ import {
   promoteToParent,
   demoteToChild,
   clearShareRevokedFlag,
+  enableShareRegistration,
 } from "@/lib/firestore-v2";
 import { fetchExchangeRate, convertUsdToJpy } from "@/lib/exchange";
 
@@ -73,6 +74,9 @@ interface AuthContextType {
   joinShare: (shareCode: string) => Promise<void>;
   leaveShare: () => Promise<void>;
   acknowledgeShareRevoked: () => Promise<void>;
+  enableSharePermission: () => Promise<void>;
+  isSharePermissionActive: boolean;
+  sharePermissionRemainingTime: number | null;
 
   // トースト
   toasts: Toast[];
@@ -236,10 +240,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const addNewSubscription = async (
     data: Omit<Subscription, "id" | "createdAt" | "updatedAt">
   ) => {
-    console.log("addNewSubscription called", { userProfile, shareCode: userProfile?.shareCode });
-    
     if (!userProfile?.shareCode) {
-      console.error("No shareCode available");
       showToast("error", "共有コードが見つかりません");
       return;
     }
@@ -253,11 +254,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     try {
-      console.log("Adding subscription with shareCode:", userProfile.shareCode);
       await addSubscription(userProfile.shareCode, subscription);
       showToast("success", "サブスクを登録しました");
     } catch (error) {
-      console.error("Error adding subscription:", error);
       showToast("error", "登録に失敗しました");
       throw error;
     }
@@ -410,6 +409,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // 共有登録許可状態の計算
+  const getSharePermissionState = useCallback(() => {
+    if (!userProfile?.shareAllowedUntil) {
+      return { isActive: false, remainingTime: null };
+    }
+    const allowedUntil = new Date(userProfile.shareAllowedUntil);
+    const now = new Date();
+    const remainingMs = allowedUntil.getTime() - now.getTime();
+    
+    if (remainingMs <= 0) {
+      return { isActive: false, remainingTime: null };
+    }
+    
+    return { isActive: true, remainingTime: Math.ceil(remainingMs / 1000) };
+  }, [userProfile?.shareAllowedUntil]);
+
+  const [sharePermissionState, setSharePermissionState] = useState(getSharePermissionState());
+
+  // 共有許可状態を1秒ごとに更新
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSharePermissionState(getSharePermissionState());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [getSharePermissionState]);
+
+  // 共有登録を許可（5分間有効）
+  const enableSharePermission = async () => {
+    if (!userProfile) return;
+
+    try {
+      await enableShareRegistration(userProfile.uid);
+      showToast("success", "共有登録を5分間許可しました");
+    } catch (error) {
+      console.error("Error enabling share permission:", error);
+      showToast("error", "許可に失敗しました");
+      throw error;
+    }
+  };
+
+  const isSharePermissionActive = sharePermissionState.isActive;
+  const sharePermissionRemainingTime = sharePermissionState.remainingTime;
+
   return (
     <AuthContext.Provider
       value={{
@@ -438,6 +480,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         joinShare,
         leaveShare,
         acknowledgeShareRevoked,
+        enableSharePermission,
+        isSharePermissionActive,
+        sharePermissionRemainingTime,
         toasts,
         showToast,
         removeToast,

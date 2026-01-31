@@ -18,6 +18,9 @@ export default function SettingsPage() {
     leaveShare,
     revokeChildAccess,
     childAccounts,
+    enableSharePermission,
+    isSharePermissionActive,
+    sharePermissionRemainingTime,
   } = useAuth();
 
   const [showJoinModal, setShowJoinModal] = useState(false);
@@ -137,6 +140,31 @@ export default function SettingsPage() {
               </p>
             </div>
 
+            {/* 共有登録許可ボタン */}
+            <div className={styles.sharePermission}>
+              {isSharePermissionActive ? (
+                <div className={styles.permissionActive}>
+                  <span className={styles.permissionStatus}>
+                    共有登録受付中
+                  </span>
+                  <span className={styles.permissionTimer}>
+                    残り {Math.floor((sharePermissionRemainingTime || 0) / 60)}分{(sharePermissionRemainingTime || 0) % 60}秒
+                  </span>
+                </div>
+              ) : (
+                <button
+                  onClick={enableSharePermission}
+                  className={`${styles.button} ${styles.primaryButton}`}
+                  disabled={isProcessing}
+                >
+                  共有登録を許可（5分間）
+                </button>
+              )}
+              <p className={styles.shareCodeHint}>
+                新規メンバーの登録を受け付けるにはこのボタンを押してください
+              </p>
+            </div>
+
             {/* 子アカウント一覧 */}
             {childAccounts.length > 0 && (
               <div className={styles.childList}>
@@ -220,7 +248,7 @@ export default function SettingsPage() {
             onChange={(e) => setShareCodeInput(e.target.value.toUpperCase())}
             placeholder="共有コードを入力"
             className={styles.modalInput}
-            maxLength={8}
+            maxLength={10}
           />
           <div className={styles.modalButtons}>
             <button

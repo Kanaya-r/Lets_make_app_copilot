@@ -11,7 +11,10 @@ export const EXCHANGE_RATE_CACHE_DURATION = 60 * 60 * 1000;
 export const FALLBACK_EXCHANGE_RATE = 150;
 
 // 共有コードの長さ
-export const SHARE_CODE_LENGTH = 6;
+export const SHARE_CODE_LENGTH = 10;
+
+// 共有登録許可の有効期間（ミリ秒）: 5分
+export const SHARE_PERMISSION_DURATION = 5 * 60 * 1000;
 
 // 通貨オプション
 export const CURRENCY_OPTIONS = [

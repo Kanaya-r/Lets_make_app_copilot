@@ -52,11 +52,10 @@ export default function SignupPage() {
       router.push("/");
     } catch (error: unknown) {
       if (error instanceof Error) {
-        if (error.message.includes("email-already-in-use")) {
-          setFormError("このメールアドレスは既に登録されています");
-        } else if (error.message.includes("共有コード")) {
+        if (error.message.includes("共有コード")) {
           setFormError(error.message);
         } else {
+          // セキュリティのため、具体的なエラー理由は開示しない
           setFormError("登録に失敗しました。もう一度お試しください。");
         }
       }
