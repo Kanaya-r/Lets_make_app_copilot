@@ -21,7 +21,7 @@ const signupSchema = z.object({
     .min(6, "パスワードは6文字以上で入力してください"),
   shareCode: z
     .string()
-    .max(6, "共有コードは6文字です")
+    .max(10, "共有コードは10文字です")
     .optional(),
 });
 
@@ -113,7 +113,7 @@ export default function SignupPage() {
               type="text"
               className={`${styles.input} ${errors.shareCode ? styles.error : ""}`}
               placeholder="他の人のデータを共有する場合"
-              maxLength={6}
+              maxLength={10}
               style={{ textTransform: "uppercase" }}
               {...register("shareCode")}
             />
