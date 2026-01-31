@@ -41,6 +41,30 @@ service cloud.firestore {
         childUid in getUserProfile().childUids;
     }
     
+    // ヘルパー関数: 子アカウントが親のchildUidsに自分を追加しようとしているか
+    function isChildAddingSelfToParent(userId) {
+      let userProfile = getUserProfile();
+      let targetProfile = resource.data;
+      
+      // 条件: 
+      // 1. 自分が子アカウントである
+      // 2. 対象が親アカウントである
+      // 3. 自分のparentUidが対象のuidと一致
+      // 4. 変更されるのはchildUidsとupdatedAtのみ
+      // 5. 新しいchildUidsに自分のuidが含まれている
+      // 6. 新しいchildUidsのサイズが1つ増えている
+      return isAuthenticated() &&
+        userProfile.accountType == 'child' &&
+        targetProfile.accountType == 'parent' &&
+        userProfile.parentUid == userId &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.accountType == resource.data.accountType &&
+        request.resource.data.shareCode == resource.data.shareCode &&
+        request.auth.uid in request.resource.data.childUids &&
+        request.resource.data.childUids.size() == resource.data.childUids.size() + 1;
+    }
+    
     // ヘルパー関数: 共有登録が許可されているか（shareAllowedUntilが現在時刻より未来）
     function isShareRegistrationAllowed(parentProfile) {
       return parentProfile.shareAllowedUntil != null &&
@@ -54,10 +78,10 @@ service cloud.firestore {
       // 読み取り: 
       // - 自分自身のプロファイル
       // - 親が自分の子アカウントのプロファイルを読む
-      // - 親アカウントのプロファイルを読む（共有コード検索用）
+      // - 親アカウントのプロファイルを読む（共有コード検索用 - 未認証でも可）
       allow read: if isOwner(userId) ||
         canManageChild(userId) ||
-        (isAuthenticated() && resource.data.accountType == 'parent');
+        resource.data.accountType == 'parent';
       
       // 作成: 認証済みで自分のUIDと一致
       // セキュリティ: childUidsは空リストで開始、shareCodeは検証済み
@@ -69,15 +93,16 @@ service cloud.firestore {
         request.resource.data.childUids is list &&
         request.resource.data.childUids.size() == 0;
       
-      // 更新: 自分自身のプロファイルのみ
-      // セキュリティ: uid, email, accountType, childUidsは変更不可
-      // shareCodeの変更は、shareAllowedUntilの更新のみ許可
-      allow update: if isOwner(userId) &&
+      // 更新: 
+      // 1. 自分自身のプロファイルのみ（uid, email, accountType, shareCode, childUidsは変更不可）
+      // 2. 子アカウントが親のchildUidsに自分を追加する場合
+      allow update: if (isOwner(userId) &&
         request.resource.data.uid == resource.data.uid &&
         request.resource.data.email == resource.data.email &&
         request.resource.data.accountType == resource.data.accountType &&
         request.resource.data.shareCode == resource.data.shareCode &&
-        request.resource.data.childUids == resource.data.childUids;
+        request.resource.data.childUids == resource.data.childUids) ||
+        isChildAddingSelfToParent(userId);
       
       // 削除: 禁止（アカウント削除は別途管理）
       allow delete: if false;
