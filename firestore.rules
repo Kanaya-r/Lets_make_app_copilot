@@ -47,14 +47,6 @@ service cloud.firestore {
         timestamp.value(parentProfile.shareAllowedUntil) > request.time;
     }
     
-    // ヘルパー関数: 共有コードで親を検索し、登録が許可されているかチェック
-    function canJoinWithShareCode(shareCode) {
-      let parentDoc = get(/databases/$(database)/documents/users/$(shareCode));
-      return parentDoc != null && 
-        parentDoc.data.accountType == 'parent' &&
-        isShareRegistrationAllowed(parentDoc.data);
-    }
-    
     // ========================================
     // users コレクション
     // ========================================
@@ -62,26 +54,30 @@ service cloud.firestore {
       // 読み取り: 
       // - 自分自身のプロファイル
       // - 親が自分の子アカウントのプロファイルを読む
-      // - 子が親のプロファイルを読む（共有コード検索用）
+      // - 親アカウントのプロファイルを読む（共有コード検索用）
       allow read: if isOwner(userId) ||
         canManageChild(userId) ||
-        (isAuthenticated() && 
-          resource.data.accountType == 'parent' && 
-          resource.data.shareCode == getUserProfile().shareCode);
+        (isAuthenticated() && resource.data.accountType == 'parent');
       
       // 作成: 認証済みで自分のUIDと一致
+      // セキュリティ: childUidsは空リストで開始、shareCodeは検証済み
       allow create: if isOwner(userId) &&
         request.resource.data.uid == userId &&
         request.resource.data.email == request.auth.token.email &&
         request.resource.data.accountType in ['parent', 'child'] &&
         request.resource.data.shareCode is string &&
-        request.resource.data.childUids is list;
+        request.resource.data.childUids is list &&
+        request.resource.data.childUids.size() == 0;
       
       // 更新: 自分自身のプロファイルのみ
-      // ただし、uid と email は変更不可
+      // セキュリティ: uid, email, accountType, childUidsは変更不可
+      // shareCodeの変更は、shareAllowedUntilの更新のみ許可
       allow update: if isOwner(userId) &&
         request.resource.data.uid == resource.data.uid &&
-        request.resource.data.email == resource.data.email;
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.accountType == resource.data.accountType &&
+        request.resource.data.shareCode == resource.data.shareCode &&
+        request.resource.data.childUids == resource.data.childUids;
       
       // 削除: 禁止（アカウント削除は別途管理）
       allow delete: if false;

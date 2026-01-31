@@ -88,7 +88,11 @@ export function isShareRegistrationAllowed(profile: UserProfile): boolean {
     return false;
   }
   const allowedUntil = new Date(profile.shareAllowedUntil);
-  return allowedUntil > new Date();
+  // 無効な日付文字列の場合は共有登録を許可しない
+  if (isNaN(allowedUntil.getTime())) {
+    return false;
+  }
+  return allowedUntil.getTime() > Date.now();
 }
 
 // 共有登録を許可（5分間有効）

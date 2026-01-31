@@ -147,9 +147,11 @@ export default function SettingsPage() {
                   <span className={styles.permissionStatus}>
                     共有登録受付中
                   </span>
-                  <span className={styles.permissionTimer}>
-                    残り {Math.floor((sharePermissionRemainingTime || 0) / 60)}分{(sharePermissionRemainingTime || 0) % 60}秒
-                  </span>
+                  {typeof sharePermissionRemainingTime === 'number' && sharePermissionRemainingTime > 0 && (
+                    <span className={styles.permissionTimer}>
+                      残り {Math.floor(sharePermissionRemainingTime / 60)}分{sharePermissionRemainingTime % 60}秒
+                    </span>
+                  )}
                 </div>
               ) : (
                 <button
