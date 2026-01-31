@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# git-ftp (認証情報を含むため除外)
+.git-ftp-config
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
