@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- 背景（白） -->
+  <rect width="512" height="512" fill="#ffffff" rx="76.8"/>
+  
+  <!-- HiHomeアイコン（プライマリーカラー）- 中央配置 -->
+  <g transform="translate(0, 0) scale(25.6)">
+    <path fill="#4a90d9" d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+  </g>
+</svg>
