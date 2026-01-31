@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { HiExclamation } from 'react-icons/hi';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSharePermissionCountdown } from '@/hooks/useSharePermissionCountdown';
 import { Modal } from '@/components/Modal';
 import styles from './page.module.scss';
 
@@ -19,9 +20,11 @@ export default function SettingsPage() {
     revokeChildAccess,
     childAccounts,
     enableSharePermission,
-    isSharePermissionActive,
-    sharePermissionRemainingTime,
   } = useAuth();
+
+  // カウントダウンはこのコンポーネント内でのみ管理（再レンダリング範囲を限定）
+  const { isActive: isSharePermissionActive, remainingTime: sharePermissionRemainingTime } = 
+    useSharePermissionCountdown(userProfile?.shareAllowedUntil);
 
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);

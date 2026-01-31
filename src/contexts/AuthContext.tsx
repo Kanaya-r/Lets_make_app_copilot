@@ -75,8 +75,6 @@ interface AuthContextType {
   leaveShare: () => Promise<void>;
   acknowledgeShareRevoked: () => Promise<void>;
   enableSharePermission: () => Promise<void>;
-  isSharePermissionActive: boolean;
-  sharePermissionRemainingTime: number | null;
 
   // トースト
   toasts: Toast[];
@@ -421,44 +419,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // 共有登録許可状態の計算
-  const getSharePermissionState = useCallback(() => {
-    if (!userProfile?.shareAllowedUntil) {
-      return { isActive: false, remainingTime: null };
-    }
-    const allowedUntil = new Date(userProfile.shareAllowedUntil);
-    // 無効な日時が保存されている場合は共有許可なしとして扱う
-    if (isNaN(allowedUntil.getTime())) {
-      return { isActive: false, remainingTime: null };
-    }
-    const now = new Date();
-    const remainingMs = allowedUntil.getTime() - now.getTime();
-    
-    if (remainingMs <= 0) {
-      return { isActive: false, remainingTime: null };
-    }
-    
-    return { isActive: true, remainingTime: Math.ceil(remainingMs / 1000) };
-  }, [userProfile?.shareAllowedUntil]);
-
-  const [sharePermissionState, setSharePermissionState] = useState(getSharePermissionState());
-
-  // 共有許可状態を1秒ごとに更新（有効期間中のみ）
-  useEffect(() => {
-    const currentState = getSharePermissionState();
-    setSharePermissionState(currentState);
-
-    // 共有許可が有効でない場合は、intervalを作成しない
-    if (!currentState.isActive) {
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setSharePermissionState(getSharePermissionState());
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [getSharePermissionState]);
-
   // 共有登録を許可（5分間有効）
   const enableSharePermission = async () => {
     if (!userProfile) return;
@@ -472,9 +432,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw error;
     }
   };
-
-  const isSharePermissionActive = sharePermissionState.isActive;
-  const sharePermissionRemainingTime = sharePermissionState.remainingTime;
 
   return (
     <AuthContext.Provider
@@ -505,8 +462,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         leaveShare,
         acknowledgeShareRevoked,
         enableSharePermission,
-        isSharePermissionActive,
-        sharePermissionRemainingTime,
         toasts,
         showToast,
         removeToast,
