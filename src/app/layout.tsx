@@ -6,6 +6,10 @@ export const metadata: Metadata = {
   title: "いえログ - 家庭のあれこれを整理・把握",
   description: "サブスクリプション管理など、家庭のあれこれを整理・把握できるアプリ",
   manifest: "/manifest.json",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export const viewport: Viewport = {
