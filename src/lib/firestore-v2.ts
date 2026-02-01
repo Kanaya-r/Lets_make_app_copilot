@@ -4,6 +4,7 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
+  deleteField,
   onSnapshot,
   query,
   where,
@@ -430,7 +431,15 @@ export async function promoteToParent(uid: string): Promise<UserProfile> {
     updatedAt: now,
   };
 
-  await setDoc(doc(db, USERS_COLLECTION, uid), updatedProfile);
+  // Firestoreには parentUid を削除して保存（undefinedはサポートされない）
+  await updateDoc(doc(db, USERS_COLLECTION, uid), {
+    accountType: "parent",
+    shareCode: newShareCode,
+    parentUid: deleteField(),
+    isShareRevoked: false,
+    childUids: [],
+    updatedAt: now,
+  });
   return updatedProfile;
 }
 
