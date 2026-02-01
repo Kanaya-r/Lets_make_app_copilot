@@ -18,8 +18,8 @@ export const SHARE_PERMISSION_DURATION = 5 * 60 * 1000;
 
 // 通貨オプション
 export const CURRENCY_OPTIONS = [
-  { value: "JPY", label: "円 (¥)" },
-  { value: "USD", label: "ドル ($)" },
+  { value: "JPY", label: "￥" },
+  { value: "USD", label: "＄" },
 ] as const;
 
 // プランタイプオプション

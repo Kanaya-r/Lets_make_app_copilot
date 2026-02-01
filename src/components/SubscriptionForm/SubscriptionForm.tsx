@@ -81,7 +81,6 @@ export function SubscriptionForm({
         <input
           type="text"
           className={`${styles.input} ${errors.name ? styles.error : ""}`}
-          placeholder="例: Netflix、Spotify"
           {...register("name")}
         />
         {errors.name && (
@@ -127,7 +126,6 @@ export function SubscriptionForm({
               type="number"
               inputMode="numeric"
               className={`${styles.input} ${errors.amount ? styles.error : ""}`}
-              placeholder={currency === "JPY" ? "例: 1490" : "例: 9.99"}
               step={currency === "JPY" ? "1" : "0.01"}
               {...register("amount", { valueAsNumber: true })}
             />
