@@ -2,8 +2,7 @@ import { initializeApp, getApps } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
-// Firebase設定
-// 注意: 本番環境では環境変数から読み込むことを推奨
+// Firebase設定（環境変数から読み込み）
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",

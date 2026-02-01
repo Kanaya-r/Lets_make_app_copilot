@@ -66,6 +66,22 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
 NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
 ```
 
+#### 環境変数の読み込み仕組み
+
+**ローカル開発時:**
+- `.env.local` から環境変数を読み込みます
+
+**本番ビルド時（デプロイ時）:**
+- `npm run build` 実行時に以下の優先順位で環境変数を読み込み、ビルドされた静的ファイルに埋め込みます：
+  1. `.env.production.local`（gitignore対象、本番専用の個別設定）
+  2. `.env.local`（gitignore対象、開発・本番両方で使用）
+  3. `.env.production`（本番用設定、必要に応じてバージョン管理可能）
+  4. `.env`（全環境共通のデフォルト設定）
+
+**現在の構成:**
+- `.env.local` に設定を記述することで、ローカル開発と本番デプロイの両方で同じFirebaseプロジェクトを使用しています
+- 開発環境と本番環境で異なるFirebaseプロジェクトを使いたい場合は、`.env.production` ファイルを作成して本番用の値を設定してください
+
 ### 3. Firestoreセキュリティルール
 
 プロジェクトに含まれる `firestore.rules` をFirebase Consoleでデプロイするか、内容をコピーして設定してください。
