@@ -32,7 +32,7 @@ import {
   revokeChildShare,
   promoteToParent,
   demoteToChild,
-  clearShareRevokedFlag,
+  clearPromotionNotification,
   enableShareRegistration,
 } from "@/lib/firestore-v2";
 import { fetchExchangeRate, convertUsdToJpy } from "@/lib/exchange";
@@ -75,8 +75,6 @@ interface AuthContextType {
   leaveShare: () => Promise<void>;
   acknowledgeShareRevoked: () => Promise<void>;
   enableSharePermission: () => Promise<void>;
-  isSharePermissionActive: boolean;
-  sharePermissionRemainingTime: number | null;
 
   // トースト
   toasts: Toast[];
@@ -155,11 +153,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshExchangeRate]);
 
   // ユーザープロファイルのリアルタイム購読
+  // isShareRevokedを検知したら自動的に親に昇格
   useEffect(() => {
     if (!user) return;
 
-    const unsubscribe = subscribeToUserProfile(user.uid, (profile) => {
-      setUserProfile(profile);
+    const unsubscribe = subscribeToUserProfile(user.uid, async (profile) => {
+      // isShareRevokedがtrueの場合、自動的に親に昇格
+      if (profile?.isShareRevoked) {
+        try {
+          const updatedProfile = await promoteToParent(user.uid, true);
+          setUserProfile(updatedProfile);
+        } catch (error) {
+          console.error("Error auto-promoting to parent:", error);
+          setUserProfile(profile);
+        }
+      } else {
+        setUserProfile(profile);
+      }
     });
 
     return () => unsubscribe();
@@ -178,6 +188,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => unsubscribe();
   }, [userProfile?.shareCode, subscriptionVersion]);
+
+  // 親アカウントの場合、childUidsが変更されたら子アカウント一覧を自動取得
+  useEffect(() => {
+    if (!userProfile || userProfile.accountType !== "parent") {
+      setChildAccounts([]);
+      return;
+    }
+
+    if (userProfile.childUids.length === 0) {
+      setChildAccounts([]);
+      return;
+    }
+
+    // childUidsから子アカウント情報を取得
+    getChildAccounts(userProfile.childUids)
+      .then((children) => {
+        setChildAccounts(children);
+      })
+      .catch((error) => {
+        console.error("Error loading child accounts:", error);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userProfile?.accountType, JSON.stringify(userProfile?.childUids)]);
 
   // サインアップ
   const handleSignUp = async (
@@ -408,56 +441,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // 共有解除を確認
+  // 共有解除通知を確認（すでに親に昇格済みなのでフラグのクリアのみ）
   const acknowledgeShareRevoked = async () => {
     if (!userProfile) return;
 
     try {
-      const updatedProfile = await promoteToParent(userProfile.uid);
-      await clearShareRevokedFlag(userProfile.uid);
-      setUserProfile(updatedProfile);
+      await clearPromotionNotification(userProfile.uid);
     } catch (error) {
       console.error("Error acknowledging share revoked:", error);
     }
   };
-
-  // 共有登録許可状態の計算
-  const getSharePermissionState = useCallback(() => {
-    if (!userProfile?.shareAllowedUntil) {
-      return { isActive: false, remainingTime: null };
-    }
-    const allowedUntil = new Date(userProfile.shareAllowedUntil);
-    // 無効な日時が保存されている場合は共有許可なしとして扱う
-    if (isNaN(allowedUntil.getTime())) {
-      return { isActive: false, remainingTime: null };
-    }
-    const now = new Date();
-    const remainingMs = allowedUntil.getTime() - now.getTime();
-    
-    if (remainingMs <= 0) {
-      return { isActive: false, remainingTime: null };
-    }
-    
-    return { isActive: true, remainingTime: Math.ceil(remainingMs / 1000) };
-  }, [userProfile?.shareAllowedUntil]);
-
-  const [sharePermissionState, setSharePermissionState] = useState(getSharePermissionState());
-
-  // 共有許可状態を1秒ごとに更新（有効期間中のみ）
-  useEffect(() => {
-    const currentState = getSharePermissionState();
-    setSharePermissionState(currentState);
-
-    // 共有許可が有効でない場合は、intervalを作成しない
-    if (!currentState.isActive) {
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setSharePermissionState(getSharePermissionState());
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [getSharePermissionState]);
 
   // 共有登録を許可（5分間有効）
   const enableSharePermission = async () => {
@@ -472,9 +465,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw error;
     }
   };
-
-  const isSharePermissionActive = sharePermissionState.isActive;
-  const sharePermissionRemainingTime = sharePermissionState.remainingTime;
 
   return (
     <AuthContext.Provider
@@ -505,8 +495,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         leaveShare,
         acknowledgeShareRevoked,
         enableSharePermission,
-        isSharePermissionActive,
-        sharePermissionRemainingTime,
         toasts,
         showToast,
         removeToast,

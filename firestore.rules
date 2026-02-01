@@ -71,6 +71,104 @@ service cloud.firestore {
         timestamp.value(parentProfile.shareAllowedUntil) > request.time;
     }
     
+    // ヘルパー関数: 親アカウントが子アカウントの共有を解除しようとしているか
+    function isParentRevokingChildShare(userId) {
+      let userProfile = getUserProfile();
+      let targetProfile = resource.data;
+      
+      // 条件:
+      // 1. 自分が親アカウントである
+      // 2. 対象が子アカウントである
+      // 3. 対象が自分のchildUidsに含まれている
+      // 4. 変更されるのはisShareRevokedとupdatedAtのみ
+      // 5. isShareRevokedがtrueに設定されている
+      return isAuthenticated() &&
+        userProfile.accountType == 'parent' &&
+        targetProfile.accountType == 'child' &&
+        userId in userProfile.childUids &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.accountType == resource.data.accountType &&
+        request.resource.data.shareCode == resource.data.shareCode &&
+        request.resource.data.parentUid == resource.data.parentUid &&
+        request.resource.data.isShareRevoked == true;
+    }
+    
+    // ヘルパー関数: 親アカウントが自分のchildUidsから子を削除しようとしているか
+    function isParentRemovingChild(userId) {
+      return isOwner(userId) &&
+        resource.data.accountType == 'parent' &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.accountType == resource.data.accountType &&
+        request.resource.data.shareCode == resource.data.shareCode &&
+        request.resource.data.childUids.size() <= resource.data.childUids.size();
+    }
+    
+    // ヘルパー関数: 子アカウントが親アカウントに昇格する場合（共有解除により自動昇格）
+    function isChildPromotingToParent(userId) {
+      return isOwner(userId) &&
+        resource.data.accountType == 'child' &&
+        resource.data.isShareRevoked == true &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.accountType == 'parent' &&
+        request.resource.data.shareCode is string &&
+        request.resource.data.childUids is list &&
+        request.resource.data.childUids.size() == 0 &&
+        !('isShareRevoked' in request.resource.data) &&
+        !('parentUid' in request.resource.data);
+    }
+    
+    // ヘルパー関数: 親アカウントが昇格通知フラグをクリアする場合
+    function isClearingPromotionNotification(userId) {
+      return isOwner(userId) &&
+        resource.data.accountType == 'parent' &&
+        resource.data.wasPromotedFromChild == true &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.accountType == resource.data.accountType &&
+        request.resource.data.shareCode == resource.data.shareCode &&
+        request.resource.data.childUids == resource.data.childUids &&
+        !('wasPromotedFromChild' in request.resource.data);
+    }
+    
+    // ヘルパー関数: 親アカウントが子アカウントに降格する場合
+    function isParentDemotingToChild(userId) {
+      return isOwner(userId) &&
+        resource.data.accountType == 'parent' &&
+        resource.data.childUids.size() == 0 &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.accountType == 'child' &&
+        request.resource.data.shareCode is string &&
+        request.resource.data.childUids is list &&
+        request.resource.data.childUids.size() == 0 &&
+        request.resource.data.parentUid is string;
+    }
+    
+    // ヘルパー関数: 子アカウントが親のchildUidsに自分を追加しようとしているか（降格後の操作含む）
+    function isAddingSelfToParentChildUids(userId) {
+      let userProfile = getUserProfile();
+      let targetProfile = resource.data;
+      
+      // 条件: 
+      // 1. 対象が親アカウントである
+      // 2. 自分のparentUidが対象のuidと一致
+      // 3. 変更されるのはchildUidsとupdatedAtのみ
+      // 4. 新しいchildUidsに自分のuidが含まれている
+      // 5. 新しいchildUidsのサイズが1つ増えている
+      return isAuthenticated() &&
+        targetProfile.accountType == 'parent' &&
+        userProfile.parentUid == userId &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.accountType == resource.data.accountType &&
+        request.resource.data.shareCode == resource.data.shareCode &&
+        request.auth.uid in request.resource.data.childUids &&
+        request.resource.data.childUids.size() == resource.data.childUids.size() + 1;
+    }
+    
     // ========================================
     // users コレクション
     // ========================================
@@ -96,13 +194,25 @@ service cloud.firestore {
       // 更新: 
       // 1. 自分自身のプロファイルのみ（uid, email, accountType, shareCode, childUidsは変更不可）
       // 2. 子アカウントが親のchildUidsに自分を追加する場合
+      // 3. 親アカウントが子アカウントの共有を解除する場合
+      // 4. 親アカウントが自分のchildUidsから子を削除する場合
+      // 5. 子アカウントが親アカウントに昇格する場合（共有解除により自動昇格）
+      // 6. 親アカウントが子アカウントに降格する場合
+      // 7. 子アカウント（降格後含む）が親のchildUidsに自分を追加する場合
+      // 8. 親アカウントが昇格通知フラグをクリアする場合
       allow update: if (isOwner(userId) &&
         request.resource.data.uid == resource.data.uid &&
         request.resource.data.email == resource.data.email &&
         request.resource.data.accountType == resource.data.accountType &&
         request.resource.data.shareCode == resource.data.shareCode &&
         request.resource.data.childUids == resource.data.childUids) ||
-        isChildAddingSelfToParent(userId);
+        isChildAddingSelfToParent(userId) ||
+        isParentRevokingChildShare(userId) ||
+        isParentRemovingChild(userId) ||
+        isChildPromotingToParent(userId) ||
+        isParentDemotingToChild(userId) ||
+        isAddingSelfToParentChildUids(userId) ||
+        isClearingPromotionNotification(userId);
       
       // 削除: 禁止（アカウント削除は別途管理）
       allow delete: if false;
@@ -112,8 +222,9 @@ service cloud.firestore {
     // sharedData コレクション
     // ========================================
     match /sharedData/{shareCode} {
-      // 読み取り: 同じ共有コードを持つユーザー
-      allow read: if hasAccessToShareCode(shareCode);
+      // 読み取り: 同じ共有コードを持つユーザー、またはオーナー自身
+      allow read: if hasAccessToShareCode(shareCode) ||
+        isSharedDataOwner(shareCode);
       
       // 作成: 認証済みで、ownerUidが自分自身
       allow create: if isAuthenticated() &&

@@ -1,6 +1,8 @@
 @use "reset";
 @use "variables" as *;
 
+@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap');
+
 // メインレイアウト
 .app-layout {
   min-height: 100vh;
@@ -28,10 +30,73 @@
   background: linear-gradient(
     90deg,
     $bg-tertiary 0px,
-    darken($bg-tertiary, 5%) 40px,
+    darken($bg-tertiary, 3%) 40px,
     $bg-tertiary 80px
   );
   background-size: 200px 100%;
   animation: skeleton-loading 1.5s ease-in-out infinite;
   border-radius: $border-radius;
+}
+
+// 警告モーダル（OKボタン以外操作不可）
+.alert-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: $spacing-md;
+}
+
+.alert-modal-content {
+  background-color: $bg-secondary;
+  border-radius: $border-radius-lg;
+  padding: $spacing-xl;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+
+  .alert-modal-icon {
+    font-size: 48px;
+    margin-bottom: $spacing-md;
+  }
+
+  .alert-modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: $text-primary;
+    margin-bottom: $spacing-sm;
+  }
+
+  .alert-modal-message {
+    color: $text-secondary;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: $spacing-lg;
+  }
+
+  .alert-modal-button {
+    display: inline-block;
+    padding: $spacing-sm $spacing-xl;
+    background-color: $primary-color;
+    color: white;
+    border: none;
+    border-radius: $border-radius;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    min-width: 120px;
+
+    &:hover {
+      background-color: darken($primary-color, 10%);
+    }
+
+    &:active {
+      background-color: darken($primary-color, 15%);
+    }
+  }
 }

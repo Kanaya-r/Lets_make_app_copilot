@@ -4,6 +4,7 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
+  deleteField,
   onSnapshot,
   query,
   where,
@@ -227,6 +228,15 @@ export async function clearShareRevokedFlag(uid: string): Promise<void> {
   });
 }
 
+// 昇格通知フラグをクリア
+export async function clearPromotionNotification(uid: string): Promise<void> {
+  const docRef = doc(db, USERS_COLLECTION, uid);
+  await updateDoc(docRef, {
+    wasPromotedFromChild: deleteField(),
+    updatedAt: new Date().toISOString(),
+  });
+}
+
 // ========== 共有データ ==========
 
 // 共有データを取得
@@ -400,7 +410,7 @@ export async function revokeChildShare(
 }
 
 // 子アカウントを親アカウントに昇格
-export async function promoteToParent(uid: string): Promise<UserProfile> {
+export async function promoteToParent(uid: string, showNotification = false): Promise<UserProfile> {
   const now = new Date().toISOString();
   const newShareCode = generateShareCode();
 
@@ -425,12 +435,28 @@ export async function promoteToParent(uid: string): Promise<UserProfile> {
     accountType: "parent",
     shareCode: newShareCode,
     parentUid: undefined,
-    isShareRevoked: false,
+    isShareRevoked: undefined,
+    wasPromotedFromChild: showNotification ? true : undefined,
     childUids: [],
     updatedAt: now,
   };
 
-  await setDoc(doc(db, USERS_COLLECTION, uid), updatedProfile);
+  // Firestoreには parentUid と isShareRevoked を削除して保存（undefinedはサポートされない）
+  // showNotificationがtrueの場合はwasPromotedFromChildをtrueに設定
+  const updateData: Record<string, unknown> = {
+    accountType: "parent",
+    shareCode: newShareCode,
+    parentUid: deleteField(),
+    isShareRevoked: deleteField(),
+    childUids: [],
+    updatedAt: now,
+  };
+  
+  if (showNotification) {
+    updateData.wasPromotedFromChild = true;
+  }
+  
+  await updateDoc(doc(db, USERS_COLLECTION, uid), updateData);
   return updatedProfile;
 }
 

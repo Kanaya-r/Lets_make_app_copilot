@@ -6,6 +6,13 @@ export const metadata: Metadata = {
   title: "いえログ - 家庭のあれこれを整理・把握",
   description: "サブスクリプション管理など、家庭のあれこれを整理・把握できるアプリ",
   manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
   robots: {
     index: false,
     follow: false,
@@ -17,7 +24,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#ffffff",
+  themeColor: "#4a90d9",
 };
 
 export default function RootLayout({
