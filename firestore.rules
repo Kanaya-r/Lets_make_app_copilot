@@ -105,7 +105,7 @@ service cloud.firestore {
         request.resource.data.childUids.size() <= resource.data.childUids.size();
     }
     
-    // ヘルパー関数: 子アカウントが親アカウントに昇格する場合（共有解除確認後）
+    // ヘルパー関数: 子アカウントが親アカウントに昇格する場合（共有解除により自動昇格）
     function isChildPromotingToParent(userId) {
       return isOwner(userId) &&
         resource.data.accountType == 'child' &&
@@ -116,8 +116,21 @@ service cloud.firestore {
         request.resource.data.shareCode is string &&
         request.resource.data.childUids is list &&
         request.resource.data.childUids.size() == 0 &&
-        request.resource.data.isShareRevoked == false &&
+        !('isShareRevoked' in request.resource.data) &&
         !('parentUid' in request.resource.data);
+    }
+    
+    // ヘルパー関数: 親アカウントが昇格通知フラグをクリアする場合
+    function isClearingPromotionNotification(userId) {
+      return isOwner(userId) &&
+        resource.data.accountType == 'parent' &&
+        resource.data.wasPromotedFromChild == true &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.accountType == resource.data.accountType &&
+        request.resource.data.shareCode == resource.data.shareCode &&
+        request.resource.data.childUids == resource.data.childUids &&
+        !('wasPromotedFromChild' in request.resource.data);
     }
     
     // ヘルパー関数: 親アカウントが子アカウントに降格する場合
@@ -183,9 +196,10 @@ service cloud.firestore {
       // 2. 子アカウントが親のchildUidsに自分を追加する場合
       // 3. 親アカウントが子アカウントの共有を解除する場合
       // 4. 親アカウントが自分のchildUidsから子を削除する場合
-      // 5. 子アカウントが親アカウントに昇格する場合（共有解除確認後）
+      // 5. 子アカウントが親アカウントに昇格する場合（共有解除により自動昇格）
       // 6. 親アカウントが子アカウントに降格する場合
       // 7. 子アカウント（降格後含む）が親のchildUidsに自分を追加する場合
+      // 8. 親アカウントが昇格通知フラグをクリアする場合
       allow update: if (isOwner(userId) &&
         request.resource.data.uid == resource.data.uid &&
         request.resource.data.email == resource.data.email &&
@@ -197,7 +211,8 @@ service cloud.firestore {
         isParentRemovingChild(userId) ||
         isChildPromotingToParent(userId) ||
         isParentDemotingToChild(userId) ||
-        isAddingSelfToParentChildUids(userId);
+        isAddingSelfToParentChildUids(userId) ||
+        isClearingPromotionNotification(userId);
       
       // 削除: 禁止（アカウント削除は別途管理）
       allow delete: if false;

@@ -32,7 +32,7 @@ import {
   revokeChildShare,
   promoteToParent,
   demoteToChild,
-  clearShareRevokedFlag,
+  clearPromotionNotification,
   enableShareRegistration,
 } from "@/lib/firestore-v2";
 import { fetchExchangeRate, convertUsdToJpy } from "@/lib/exchange";
@@ -153,11 +153,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshExchangeRate]);
 
   // ユーザープロファイルのリアルタイム購読
+  // isShareRevokedを検知したら自動的に親に昇格
   useEffect(() => {
     if (!user) return;
 
-    const unsubscribe = subscribeToUserProfile(user.uid, (profile) => {
-      setUserProfile(profile);
+    const unsubscribe = subscribeToUserProfile(user.uid, async (profile) => {
+      // isShareRevokedがtrueの場合、自動的に親に昇格
+      if (profile?.isShareRevoked) {
+        try {
+          const updatedProfile = await promoteToParent(user.uid, true);
+          setUserProfile(updatedProfile);
+        } catch (error) {
+          console.error("Error auto-promoting to parent:", error);
+          setUserProfile(profile);
+        }
+      } else {
+        setUserProfile(profile);
+      }
     });
 
     return () => unsubscribe();
@@ -429,14 +441,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // 共有解除を確認
+  // 共有解除通知を確認（すでに親に昇格済みなのでフラグのクリアのみ）
   const acknowledgeShareRevoked = async () => {
     if (!userProfile) return;
 
     try {
-      const updatedProfile = await promoteToParent(userProfile.uid);
-      await clearShareRevokedFlag(userProfile.uid);
-      setUserProfile(updatedProfile);
+      await clearPromotionNotification(userProfile.uid);
     } catch (error) {
       console.error("Error acknowledging share revoked:", error);
     }
