@@ -102,14 +102,27 @@
 .amountRow {
   display: flex;
   gap: $spacing-sm;
+  width: 100%;
 }
 
 .amountInput {
-  flex: 2;
+  flex: 1;
+  min-width: 0; // flexアイテムの縮小を許可
+
+  .input {
+    width: 100%;
+    box-sizing: border-box;
+  }
 }
 
 .currencySelect {
-  flex: 1;
+  flex: 0 0 auto; // 通貨選択は固定幅
+  width: 80px;
+
+  .select {
+    width: 100%;
+    box-sizing: border-box;
+  }
 }
 
 .select {
