@@ -191,7 +191,8 @@ service cloud.firestore {
       // コレクションクエリ (list):
       // - 認証済みユーザーが共有コード検索で親アカウントを検索する場合のみ
       allow list: if isAuthenticated() &&
-        resource.data.accountType == 'parent';
+        resource.data.accountType == 'parent' &&
+        isShareRegistrationAllowed(resource.data);
       
       // 作成: 認証済みで自分のUIDと一致
       // セキュリティ: childUidsは空リストで開始、shareCodeは検証済み
