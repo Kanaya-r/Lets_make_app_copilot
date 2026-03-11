@@ -20,8 +20,6 @@ import { onAuthChange, signUp, logIn, logOut } from "@/lib/auth";
 import {
   getUserProfile,
   createParentProfile,
-  createChildProfile,
-  findParentByShareCode,
   subscribeToSharedData,
   subscribeToUserProfile,
   addSubscription,
@@ -45,7 +43,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
 
   // 認証アクション
-  handleSignUp: (email: string, password: string, shareCode?: string) => Promise<void>;
+  handleSignUp: (email: string, password: string) => Promise<void>;
   handleLogIn: (email: string, password: string) => Promise<void>;
   handleLogOut: () => Promise<void>;
 
@@ -212,34 +210,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userProfile?.accountType, JSON.stringify(userProfile?.childUids)]);
 
-  // サインアップ
+  // サインアップ（常に親アカウントとして作成。共有参加は設定画面から行う）
   const handleSignUp = async (
     email: string,
-    password: string,
-    shareCode?: string
+    password: string
   ) => {
     try {
-      // 共有コードが入力されている場合、アカウント作成前に検証する
-      let parentProfile: UserProfile | null = null;
-      if (shareCode) {
-        parentProfile = await findParentByShareCode(shareCode);
-        if (!parentProfile) {
-          throw new Error("共有コードが無効か、共有登録が許可されていません");
-        }
-      }
-
-      // 共有コードの検証が成功した後にアカウントを作成
       const authUser = await signUp(email, password);
-
-      let profile: UserProfile;
-
-      if (shareCode && parentProfile) {
-        // 子アカウントとして登録
-        profile = await createChildProfile(authUser.uid, email, parentProfile);
-      } else {
-        // 親アカウントとして登録
-        profile = await createParentProfile(authUser.uid, email);
-      }
+      const profile = await createParentProfile(authUser.uid, email);
 
       setUserProfile(profile);
       // 購読を強制的に再開始させる
