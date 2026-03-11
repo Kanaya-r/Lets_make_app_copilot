@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { HiExclamation } from 'react-icons/hi';
 import { useAuth } from '@/contexts/AuthContext';
+import { getUserProfile } from '@/lib/firestore-v2';
 import { useSharePermissionCountdown } from '@/hooks/useSharePermissionCountdown';
 import { Modal } from '@/components/Modal';
 import styles from './page.module.scss';
@@ -33,6 +34,22 @@ export default function SettingsPage() {
   const [shareCodeInput, setShareCodeInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [parentEmail, setParentEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!userProfile || userProfile.accountType !== 'child' || !userProfile.parentUid) {
+      setParentEmail(null);
+      return;
+    }
+
+    getUserProfile(userProfile.parentUid)
+      .then((parentProfile) => {
+        setParentEmail(parentProfile?.email ?? null);
+      })
+      .catch(() => {
+        setParentEmail(null);
+      });
+  }, [userProfile]);
 
   if (isLoading || !user || !userProfile) {
     return (
@@ -201,7 +218,9 @@ export default function SettingsPage() {
             {/* 子アカウントの場合：共有状態と離脱オプション */}
             <div className={styles.item}>
               <span className={styles.itemLabel}>共有元</span>
-              <span className={styles.itemValue}>オーナーのデータを共有中</span>
+              <span className={styles.itemValue}>
+                {parentEmail ? `${parentEmail} のデータを共有中` : 'オーナーのデータを共有中'}
+              </span>
             </div>
             <div className={styles.item}>
               <span className={styles.itemLabel}>共有を解除</span>
@@ -209,7 +228,7 @@ export default function SettingsPage() {
                 onClick={() => setShowLeaveConfirm(true)}
                 className={`${styles.button} ${styles.outlineButton}`}
               >
-                共有から離脱
+                解除
               </button>
             </div>
           </>
