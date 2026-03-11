@@ -19,10 +19,6 @@ const signupSchema = z.object({
   password: z
     .string()
     .min(6, "パスワードは6文字以上で入力してください"),
-  shareCode: z
-    .string()
-    .max(10, "共有コードは10文字です")
-    .optional(),
 });
 
 type FormData = z.infer<typeof signupSchema>;
@@ -43,21 +39,12 @@ export default function SignupPage() {
   const onSubmit = async (data: FormData) => {
     setFormError("");
     try {
-      const shareCode = data.shareCode?.toUpperCase();
-      await handleSignUp(
-        data.email,
-        data.password,
-        shareCode || undefined
-      );
+      await handleSignUp(data.email, data.password);
       router.push("/");
     } catch (error: unknown) {
       if (error instanceof Error) {
-        if (error.message.includes("共有コード")) {
-          setFormError(error.message);
-        } else {
-          // セキュリティのため、具体的なエラー理由は開示しない
-          setFormError("登録に失敗しました。もう一度お試しください。");
-        }
+        // セキュリティのため、具体的なエラー理由は開示しない
+        setFormError("登録に失敗しました。もう一度お試しください。");
       }
     }
   };
@@ -101,29 +88,6 @@ export default function SignupPage() {
             />
             {errors.password && (
               <span className={styles.errorMessage}>{errors.password.message}</span>
-            )}
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label}>
-              共有コード
-              <span className={styles.optional}>（任意）</span>
-            </label>
-            <input
-              type="text"
-              className={`${styles.input} ${errors.shareCode ? styles.error : ""}`}
-              placeholder="他の人のデータを共有する場合"
-              maxLength={10}
-              style={{ textTransform: "uppercase" }}
-              {...register("shareCode")}
-            />
-            <p className={styles.hint}>
-              共有コードを入力すると、そのデータを共有できます。
-              <br />
-              入力しない場合は新規データが作成されます。
-            </p>
-            {errors.shareCode && (
-              <span className={styles.errorMessage}>{errors.shareCode.message}</span>
             )}
           </div>
 
