@@ -49,7 +49,9 @@ export default function SettingsPage() {
       .catch(() => {
         setParentEmail(null);
       });
-  }, [userProfile]);
+  // parentUid が変わる（子→親昇格）タイミングのみ再取得すれば十分
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userProfile?.parentUid]);
 
   if (isLoading || !user || !userProfile) {
     return (
