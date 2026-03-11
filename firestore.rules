@@ -40,6 +40,13 @@ service cloud.firestore {
         getUserProfile().accountType == 'parent' &&
         childUid in getUserProfile().childUids;
     }
+
+    // ヘルパー関数: 子アカウントが自分の親プロフィールを読めるか
+    function canReadOwnParent(parentUid) {
+      return isAuthenticated() &&
+        getUserProfile().accountType == 'child' &&
+        getUserProfile().parentUid == parentUid;
+    }
     
     // ヘルパー関数: 子アカウントが親のchildUidsに自分を追加しようとしているか
     function isChildAddingSelfToParent(userId) {
@@ -173,12 +180,17 @@ service cloud.firestore {
     // users コレクション
     // ========================================
     match /users/{userId} {
-      // 読み取り: 
+      // 単一ドキュメント取得 (get):
       // - 自分自身のプロファイル
       // - 親が自分の子アカウントのプロファイルを読む
-      // - 親アカウントのプロファイルを読む（共有コード検索用 - 未認証でも可）
-      allow read: if isOwner(userId) ||
+      // - 子が自分の親アカウントのプロファイルを読む
+      allow get: if isOwner(userId) ||
         canManageChild(userId) ||
+        canReadOwnParent(userId);
+      
+      // コレクションクエリ (list):
+      // - 認証済みユーザーが共有コード検索で親アカウントを検索する場合のみ
+      allow list: if isAuthenticated() &&
         resource.data.accountType == 'parent';
       
       // 作成: 認証済みで自分のUIDと一致
