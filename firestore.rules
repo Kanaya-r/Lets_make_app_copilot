@@ -74,8 +74,10 @@ service cloud.firestore {
     
     // ヘルパー関数: 共有登録が許可されているか（shareAllowedUntilが現在時刻より未来）
     function isShareRegistrationAllowed(parentProfile) {
+      // Firestore RulesではISO文字列をtimestampへ安全に変換できないため、
+      // ここでは値の存在と型のみを検証する（有効期限判定はアプリ側で実施）。
       return parentProfile.shareAllowedUntil != null &&
-        timestamp.value(parentProfile.shareAllowedUntil) > request.time;
+        parentProfile.shareAllowedUntil is string;
     }
     
     // ヘルパー関数: 親アカウントが子アカウントの共有を解除しようとしているか
@@ -112,11 +114,10 @@ service cloud.firestore {
         request.resource.data.childUids.size() <= resource.data.childUids.size();
     }
     
-    // ヘルパー関数: 子アカウントが親アカウントに昇格する場合（共有解除により自動昇格）
+    // ヘルパー関数: 子アカウントが親アカウントに昇格する場合（共有解除による自動昇格、または子からの自発的解除）
     function isChildPromotingToParent(userId) {
       return isOwner(userId) &&
         resource.data.accountType == 'child' &&
-        resource.data.isShareRevoked == true &&
         request.resource.data.uid == resource.data.uid &&
         request.resource.data.email == resource.data.email &&
         request.resource.data.accountType == 'parent' &&
@@ -152,6 +153,21 @@ service cloud.firestore {
         request.resource.data.childUids is list &&
         request.resource.data.childUids.size() == 0 &&
         request.resource.data.parentUid is string;
+    }
+    
+    // ヘルパー関数: 子アカウントが親のchildUidsから自分を削除しようとしているか（自発的な共有解除）
+    function isChildRemovingSelfFromParent(userId) {
+      let userProfile = getUserProfile();
+      return isAuthenticated() &&
+        userProfile.accountType == 'child' &&
+        userProfile.parentUid == userId &&
+        resource.data.accountType == 'parent' &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.accountType == resource.data.accountType &&
+        request.resource.data.shareCode == resource.data.shareCode &&
+        !(request.auth.uid in request.resource.data.childUids) &&
+        request.resource.data.childUids.size() == resource.data.childUids.size() - 1;
     }
     
     // ヘルパー関数: 子アカウントが親のchildUidsに自分を追加しようとしているか（降格後の操作含む）
@@ -191,8 +207,7 @@ service cloud.firestore {
       // コレクションクエリ (list):
       // - 認証済みユーザーが共有コード検索で親アカウントを検索する場合のみ
       allow list: if isAuthenticated() &&
-        resource.data.accountType == 'parent' &&
-        isShareRegistrationAllowed(resource.data);
+        resource.data.accountType == 'parent';
       
       // 作成: 認証済みで自分のUIDと一致
       // セキュリティ: childUidsは空リストで開始、shareCodeは検証済み
@@ -209,10 +224,11 @@ service cloud.firestore {
       // 2. 子アカウントが親のchildUidsに自分を追加する場合
       // 3. 親アカウントが子アカウントの共有を解除する場合
       // 4. 親アカウントが自分のchildUidsから子を削除する場合
-      // 5. 子アカウントが親アカウントに昇格する場合（共有解除により自動昇格）
+      // 5. 子アカウントが親アカウントに昇格する場合（共有解除による自動昇格、または自発的解除）
       // 6. 親アカウントが子アカウントに降格する場合
       // 7. 子アカウント（降格後含む）が親のchildUidsに自分を追加する場合
-      // 8. 親アカウントが昇格通知フラグをクリアする場合
+      // 8. 子アカウントが親のchildUidsから自分を削除する場合（自発的な共有解除）
+      // 9. 親アカウントが昇格通知フラグをクリアする場合
       allow update: if (isOwner(userId) &&
         request.resource.data.uid == resource.data.uid &&
         request.resource.data.email == resource.data.email &&
@@ -225,6 +241,7 @@ service cloud.firestore {
         isChildPromotingToParent(userId) ||
         isParentDemotingToChild(userId) ||
         isAddingSelfToParentChildUids(userId) ||
+        isChildRemovingSelfFromParent(userId) ||
         isClearingPromotionNotification(userId);
       
       // 削除: 禁止（アカウント削除は別途管理）

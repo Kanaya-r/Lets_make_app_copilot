@@ -99,8 +99,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 共有管理
   const [childAccounts, setChildAccounts] = useState<ChildAccountInfo[]>([]);
 
-  // 購読再開始用のカウンター（プロファイル作成時に強制的に再購読させる）
+  // 購読再開始用のカウンター（プロファイル作成時や共有参加/離脱時に強制的に再購読させる）
   const [subscriptionVersion, setSubscriptionVersion] = useState(0);
+
+  // 共有操作中フラグ（リスナーの中間状態による再subscribeを防止）
+  const [isShareOperating, setIsShareOperating] = useState(false);
 
   // トースト
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -175,8 +178,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // 共有データのリアルタイム購読
   // subscriptionVersionを依存配列に追加し、プロファイル作成後に強制的に再購読させる
+  // isShareOperating中はリスナーの再subscribeをスキップ（中間状態での権限エラーを防止）
   useEffect(() => {
-    if (!userProfile?.shareCode) return;
+    if (!userProfile?.shareCode || isShareOperating) return;
 
     const unsubscribe = subscribeToSharedData(userProfile.shareCode, (data) => {
       if (data) {
@@ -185,7 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [userProfile?.shareCode, subscriptionVersion]);
+  }, [userProfile?.shareCode, subscriptionVersion, isShareOperating]);
 
   // 親アカウントの場合、childUidsが変更されたら子アカウント一覧を自動取得
   useEffect(() => {
@@ -393,6 +397,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const joinShare = async (shareCode: string) => {
     if (!userProfile) return;
 
+    setIsShareOperating(true);
     try {
       const updatedProfile = await demoteToChild(userProfile.uid, shareCode);
       setUserProfile(updatedProfile);
@@ -401,6 +406,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const message = error instanceof Error ? error.message : "参加に失敗しました";
       showToast("error", message);
       throw error;
+    } finally {
+      setIsShareOperating(false);
+      setSubscriptionVersion((v) => v + 1);
     }
   };
 
@@ -408,6 +416,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const leaveShare = async () => {
     if (!userProfile) return;
 
+    setIsShareOperating(true);
     try {
       const updatedProfile = await promoteToParent(userProfile.uid);
       setUserProfile(updatedProfile);
@@ -416,6 +425,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("Error leaving share:", error);
       showToast("error", "解除に失敗しました");
       throw error;
+    } finally {
+      setIsShareOperating(false);
+      setSubscriptionVersion((v) => v + 1);
     }
   };
 
