@@ -6,6 +6,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useRef,
   ReactNode,
 } from "react";
 import { User } from "firebase/auth";
@@ -99,6 +100,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 共有管理
   const [childAccounts, setChildAccounts] = useState<ChildAccountInfo[]>([]);
 
+  // sharedDataリスナーの解除関数を保持（React再レンダー前に即座に解除するため）
+  const sharedDataUnsubRef = useRef<(() => void) | null>(null);
+
   // 購読再開始用のカウンター（プロファイル作成時や共有参加/離脱時に強制的に再購読させる）
   const [subscriptionVersion, setSubscriptionVersion] = useState(0);
 
@@ -188,7 +192,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    return () => unsubscribe();
+    sharedDataUnsubRef.current = unsubscribe;
+
+    return () => {
+      unsubscribe();
+      sharedDataUnsubRef.current = null;
+    };
   }, [userProfile?.shareCode, subscriptionVersion, isShareOperating]);
 
   // 親アカウントの場合、childUidsが変更されたら子アカウント一覧を自動取得
@@ -397,6 +406,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const joinShare = async (shareCode: string) => {
     if (!userProfile) return;
 
+    // sharedDataリスナーを即座に解除（React再レンダー前にFirestoreの権限エラーを防止）
+    sharedDataUnsubRef.current?.();
+    sharedDataUnsubRef.current = null;
     setIsShareOperating(true);
     try {
       const updatedProfile = await demoteToChild(userProfile.uid, shareCode);
@@ -416,6 +428,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const leaveShare = async () => {
     if (!userProfile) return;
 
+    // sharedDataリスナーを即座に解除（React再レンダー前にFirestoreの権限エラーを防止）
+    sharedDataUnsubRef.current?.();
+    sharedDataUnsubRef.current = null;
     setIsShareOperating(true);
     try {
       const updatedProfile = await promoteToParent(userProfile.uid);

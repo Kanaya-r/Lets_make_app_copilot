@@ -74,10 +74,10 @@ service cloud.firestore {
     
     // ヘルパー関数: 共有登録が許可されているか（shareAllowedUntilが現在時刻より未来）
     function isShareRegistrationAllowed(parentProfile) {
-      // Firestore RulesではISO文字列をtimestampへ安全に変換できないため、
-      // ここでは値の存在と型のみを検証する（有効期限判定はアプリ側で実施）。
+      // ISO文字列は timestamp.value() で比較可能。
       return parentProfile.shareAllowedUntil != null &&
-        parentProfile.shareAllowedUntil is string;
+        parentProfile.shareAllowedUntil is string &&
+        timestamp.value(parentProfile.shareAllowedUntil) > request.time;
     }
     
     // ヘルパー関数: 親アカウントが子アカウントの共有を解除しようとしているか
@@ -205,9 +205,8 @@ service cloud.firestore {
         canReadOwnParent(userId);
       
       // コレクションクエリ (list):
-      // - 認証済みユーザーが共有コード検索で親アカウントを検索する場合のみ
-      allow list: if isAuthenticated() &&
-        resource.data.accountType == 'parent';
+      // - usersコレクションの一覧取得は禁止（共有コード検索はshareInvites経由）
+      allow list: if false;
       
       // 作成: 認証済みで自分のUIDと一致
       // セキュリティ: childUidsは空リストで開始、shareCodeは検証済み
@@ -246,6 +245,31 @@ service cloud.firestore {
       
       // 削除: 禁止（アカウント削除は別途管理）
       allow delete: if false;
+    }
+
+    // ========================================
+    // shareInvites コレクション
+    // ========================================
+    match /shareInvites/{shareCode} {
+      // 単一取得のみ許可（一覧は禁止）
+      // 共有許可が有効な期間だけ取得可能
+      allow get: if isAuthenticated() &&
+        resource.data.shareCode == shareCode &&
+        resource.data.ownerUid is string &&
+        resource.data.enabledUntil is timestamp &&
+        resource.data.enabledUntil > request.time;
+
+      allow list: if false;
+
+      // 作成/更新はオーナー本人のみ
+      allow create, update: if isAuthenticated() &&
+        request.resource.data.shareCode == shareCode &&
+        request.resource.data.ownerUid == request.auth.uid &&
+        request.resource.data.enabledUntil is timestamp;
+
+      // 削除はオーナー本人のみ
+      allow delete: if isAuthenticated() &&
+        resource.data.ownerUid == request.auth.uid;
     }
     
     // ========================================
