@@ -346,7 +346,14 @@ export function subscribeToSharedData(
       }
     },
     (error) => {
-      console.error("Error subscribing to shared data:", error);
+      const errorCode =
+        typeof error === "object" && error !== null && "code" in error
+          ? (error as { code?: string }).code
+          : undefined;
+      // 認証切替直後の一時的な permission-denied は無害なためノイズを抑える
+      if (errorCode !== "permission-denied") {
+        console.error("Error subscribing to shared data:", error);
+      }
       callback(null);
     }
   );
