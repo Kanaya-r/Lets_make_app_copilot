@@ -277,7 +277,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUserProfile(profile);
       showToast("success", "ログインしました");
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "ログインに失敗しました";
+      const message =
+        error instanceof Error
+          ? error.message === "email-not-verified"
+            ? "メール認証が完了していません。確認メールのリンクを開いてからログインしてください。"
+            : "ログインに失敗しました"
+          : "ログインに失敗しました";
       showToast("error", message);
       throw error;
     }
