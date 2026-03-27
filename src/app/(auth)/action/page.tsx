@@ -192,7 +192,7 @@ export default function EmailActionPage() {
                 <input
                   type="password"
                   className={`${styles.input} ${errors.password ? styles.error : ""}`}
-                  placeholder="6文字以上のパスワード"
+                  placeholder="8文字以上のパスワード"
                   autoComplete="new-password"
                   {...register("password")}
                 />
