@@ -17,7 +17,7 @@ const signupSchema = z.object({
     .email("有効なメールアドレスを入力してください"),
   password: z
     .string()
-    .min(6, "パスワードは6文字以上で入力してください"),
+    .min(8, "パスワードは8文字以上で入力してください"),
 });
 
 type FormData = z.infer<typeof signupSchema>;
@@ -103,7 +103,7 @@ export default function SignupPage() {
                 <input
                   type="password"
                   className={`${styles.input} ${errors.password ? styles.error : ""}`}
-                  placeholder="6文字以上"
+                  placeholder="8文字以上"
                   autoComplete="new-password"
                   {...register("password")}
                 />
