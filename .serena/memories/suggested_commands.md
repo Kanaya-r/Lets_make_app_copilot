@@ -1,0 +1,7 @@
+- Install: npm install
+- Dev: npm run dev
+- Build: npm run build
+- Start: npm run start
+- Lint: npm run lint
+- Deploy: npm run deploy / npm run deploy:init / npm run deploy:catchup
+- Firestore rules deploy: firebase deploy --only firestore:rules

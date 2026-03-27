@@ -1,0 +1,3 @@
+- users list query is now disabled in firestore.rules to prevent broad enumeration of parent accounts.
+- share code lookup flow uses shareInvites/{shareCode} single-doc reads with expiry check in rules and client.
+- enableShareRegistration creates/updates shareInvites doc; disableShareRegistration deletes it.

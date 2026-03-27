@@ -1,0 +1,4 @@
+- TypeScript strict typing; domain types in src/types.
+- App Router grouping with (auth)/(main).
+- UI styling via SCSS modules and global SCSS variables/reset.
+- No new libraries/pattern changes unless required; keep existing architecture.

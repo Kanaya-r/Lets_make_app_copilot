@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, type ReadonlyURLSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,10 +23,25 @@ const loginSchema = z.object({
 
 type FormData = z.infer<typeof loginSchema>;
 
+function getSuccessMessage(searchParams: ReadonlyURLSearchParams): string | null {
+  if (searchParams.get("emailVerified") === "true") {
+    return "メール認証が完了しました。メールアドレスとパスワードでログインしてください。";
+  }
+  if (searchParams.get("passwordReset") === "true") {
+    return "パスワードをリセットしました。新しいパスワードでログインしてください。";
+  }
+  if (searchParams.get("emailRecovered") === "true") {
+    return "メールアドレスが復旧されました。ログインしてください。";
+  }
+  return null;
+}
+
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { handleLogIn } = useAuth();
   const [formError, setFormError] = useState("");
+  const successMessage = getSuccessMessage(searchParams);
 
   const {
     register,
@@ -49,6 +64,8 @@ export default function LoginPage() {
           error.message.includes("invalid-credential")
         ) {
           setFormError("メールアドレスまたはパスワードが正しくありません");
+        } else if (error.message.includes("email-not-verified")) {
+          setFormError("メール認証が完了していません。確認メールのリンクを開いてからログインしてください。");
         } else {
           setFormError("ログインに失敗しました。もう一度お試しください。");
         }
@@ -63,6 +80,12 @@ export default function LoginPage() {
       <p className={styles.subtitle}>ログイン</p>
 
       <div className={styles.card}>
+        {successMessage && (
+          <div className={styles.formSuccess}>
+            {successMessage}
+          </div>
+        )}
+
         <form className={styles.form} onSubmit={handleSubmit(onSubmit)}>
           {formError && <div className={styles.formError}>{formError}</div>}
 

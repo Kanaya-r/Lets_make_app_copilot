@@ -6,13 +6,12 @@ import {
   deleteDoc,
   deleteField,
   onSnapshot,
-  query,
-  where,
-  collection,
-  getDocs,
+  Timestamp,
+  arrayUnion,
+  arrayRemove,
   Unsubscribe,
 } from "firebase/firestore";
-import { db } from "./firebase";
+import { auth, db } from "./firebase";
 import {
   Subscription,
   UserProfile,
@@ -24,6 +23,15 @@ import { SHARE_CODE_LENGTH, SHARE_PERMISSION_DURATION } from "@/config/constants
 // コレクション名
 const USERS_COLLECTION = "users";
 const SHARED_DATA_COLLECTION = "sharedData";
+const SHARE_INVITES_COLLECTION = "shareInvites";
+const SHARE_CODE_PATTERN = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]+$/;
+
+function isValidShareCode(shareCode: string): boolean {
+  return (
+    shareCode.length === SHARE_CODE_LENGTH &&
+    SHARE_CODE_PATTERN.test(shareCode)
+  );
+}
 
 // 共有コード生成（暗号学的に安全な乱数を使用）
 export function generateShareCode(): string {
@@ -49,36 +57,79 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
     }
     return null;
   } catch (error) {
+    const errorCode =
+      typeof error === "object" && error !== null && "code" in error
+        ? (error as { code?: string }).code
+        : undefined;
+    // 他ユーザーのプロフィール参照時に permission-denied が返るケースは null 扱いにする
+    if (errorCode === "permission-denied" && auth.currentUser?.uid !== uid) {
+      return null;
+    }
     console.error("Error getting user profile:", error);
     throw error;
   }
 }
 
-// 共有コードでユーザープロファイルを検索（親アカウントのみ）
-// 共有登録が許可されている場合のみ返す
-export async function findParentByShareCode(
+// 共有招待の情報（shareInvitesコレクションから取得）
+interface ShareInviteInfo {
+  ownerUid: string;
+  shareCode: string;
+}
+
+type InviteRaw = {
+  ownerUid?: string;
+  shareCode?: string;
+  enabledUntil?: Timestamp | string;
+};
+
+function isInviteEnabled(enabledUntil: Timestamp | string): boolean {
+  if (enabledUntil instanceof Timestamp) {
+    return enabledUntil.toMillis() > Date.now();
+  }
+
+  const until = new Date(enabledUntil);
+  if (isNaN(until.getTime())) {
+    return false;
+  }
+  return until.getTime() > Date.now();
+}
+
+// 共有コードで有効な招待情報を取得
+// usersコレクションのlistは使わず、shareInvitesの単一ドキュメント取得のみ
+export async function findShareInvite(
   shareCode: string
-): Promise<UserProfile | null> {
+): Promise<ShareInviteInfo | null> {
   try {
-    const q = query(
-      collection(db, USERS_COLLECTION),
-      where("shareCode", "==", shareCode),
-      where("accountType", "==", "parent")
-    );
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-      const parentProfile = querySnapshot.docs[0].data() as UserProfile;
-      
-      // 共有登録が許可されているかチェック
-      if (!isShareRegistrationAllowed(parentProfile)) {
-        return null;
-      }
-      
-      return parentProfile;
+    if (!isValidShareCode(shareCode)) {
+      return null;
     }
-    return null;
+
+    const inviteRef = doc(db, SHARE_INVITES_COLLECTION, shareCode);
+    const inviteSnap = await getDoc(inviteRef);
+    if (!inviteSnap.exists()) {
+      return null;
+    }
+
+    const invite = inviteSnap.data() as InviteRaw;
+
+    if (
+      typeof invite.ownerUid !== "string" ||
+      !(invite.enabledUntil instanceof Timestamp) && typeof invite.enabledUntil !== "string"
+    ) {
+      return null;
+    }
+
+    // 二重チェック（ルールでも期限チェックするが、クライアント側でも整合性を担保）
+    if (!isInviteEnabled(invite.enabledUntil)) {
+      return null;
+    }
+
+    return {
+      ownerUid: invite.ownerUid,
+      shareCode,
+    };
   } catch (error) {
-    console.error("Error finding parent by share code:", error);
+    console.error("Error finding share invite:", error);
     throw error;
   }
 }
@@ -98,25 +149,47 @@ export function isShareRegistrationAllowed(profile: UserProfile): boolean {
 
 // 共有登録を許可（5分間有効）
 export async function enableShareRegistration(uid: string): Promise<string> {
+  const profile = await getUserProfile(uid);
+  if (!profile) {
+    throw new Error("User profile not found");
+  }
+
   const now = new Date();
   const allowedUntil = new Date(now.getTime() + SHARE_PERMISSION_DURATION);
+  const nowIso = now.toISOString();
+  const allowedUntilIso = allowedUntil.toISOString();
   
   const docRef = doc(db, USERS_COLLECTION, uid);
   await updateDoc(docRef, {
-    shareAllowedUntil: allowedUntil.toISOString(),
-    updatedAt: now.toISOString(),
+    shareAllowedUntil: allowedUntilIso,
+    updatedAt: nowIso,
+  });
+
+  const inviteRef = doc(db, SHARE_INVITES_COLLECTION, profile.shareCode);
+  await setDoc(inviteRef, {
+    shareCode: profile.shareCode,
+    ownerUid: uid,
+    enabledUntil: Timestamp.fromDate(allowedUntil),
+    updatedAt: nowIso,
+    createdAt: nowIso,
   });
   
-  return allowedUntil.toISOString();
+  return allowedUntilIso;
 }
 
 // 共有登録許可を取り消し
 export async function disableShareRegistration(uid: string): Promise<void> {
+  const profile = await getUserProfile(uid);
   const docRef = doc(db, USERS_COLLECTION, uid);
   await updateDoc(docRef, {
     shareAllowedUntil: null,
     updatedAt: new Date().toISOString(),
   });
+
+  if (profile?.shareCode) {
+    const inviteRef = doc(db, SHARE_INVITES_COLLECTION, profile.shareCode);
+    await deleteDoc(inviteRef);
+  }
 }
 
 // 親アカウントとしてユーザープロファイルを作成
@@ -174,32 +247,22 @@ export async function createChildProfile(
   return profile;
 }
 
-// 親のchildUidsに子を追加
+// 親のchildUidsに子を追加（arrayUnionで親ドキュメントの事前読み取り不要）
 async function addChildToParent(parentUid: string, childUid: string): Promise<void> {
   const parentRef = doc(db, USERS_COLLECTION, parentUid);
-  const parentSnap = await getDoc(parentRef);
-  if (parentSnap.exists()) {
-    const parent = parentSnap.data() as UserProfile;
-    const updatedChildUids = [...parent.childUids, childUid];
-    await updateDoc(parentRef, {
-      childUids: updatedChildUids,
-      updatedAt: new Date().toISOString(),
-    });
-  }
+  await updateDoc(parentRef, {
+    childUids: arrayUnion(childUid),
+    updatedAt: new Date().toISOString(),
+  });
 }
 
-// 親のchildUidsから子を削除
+// 親のchildUidsから子を削除（arrayRemoveで親ドキュメントの事前読み取り不要）
 async function removeChildFromParent(parentUid: string, childUid: string): Promise<void> {
   const parentRef = doc(db, USERS_COLLECTION, parentUid);
-  const parentSnap = await getDoc(parentRef);
-  if (parentSnap.exists()) {
-    const parent = parentSnap.data() as UserProfile;
-    const updatedChildUids = parent.childUids.filter((uid) => uid !== childUid);
-    await updateDoc(parentRef, {
-      childUids: updatedChildUids,
-      updatedAt: new Date().toISOString(),
-    });
-  }
+  await updateDoc(parentRef, {
+    childUids: arrayRemove(childUid),
+    updatedAt: new Date().toISOString(),
+  });
 }
 
 // ユーザープロファイルを更新
@@ -295,7 +358,14 @@ export function subscribeToSharedData(
       }
     },
     (error) => {
-      console.error("Error subscribing to shared data:", error);
+      const errorCode =
+        typeof error === "object" && error !== null && "code" in error
+          ? (error as { code?: string }).code
+          : undefined;
+      // 認証切替直後の一時的な permission-denied は無害なためノイズを抑える
+      if (errorCode !== "permission-denied") {
+        console.error("Error subscribing to shared data:", error);
+      }
       callback(null);
     }
   );
@@ -473,9 +543,9 @@ export async function demoteToChild(
     throw new Error("共有中の子アカウントがあります。先に解除してください。");
   }
 
-  // 親を検索
-  const parentProfile = await findParentByShareCode(parentShareCode);
-  if (!parentProfile) {
+  // 共有招待を検索（shareInvitesから取得、親のusersドキュメントは読まない）
+  const invite = await findShareInvite(parentShareCode);
+  if (!invite) {
     throw new Error("共有コードが見つかりません");
   }
 
@@ -489,7 +559,7 @@ export async function demoteToChild(
     ...profile,
     accountType: "child",
     shareCode: parentShareCode,
-    parentUid: parentProfile.uid,
+    parentUid: invite.ownerUid,
     childUids: [],
     updatedAt: now,
   };
@@ -497,7 +567,7 @@ export async function demoteToChild(
   await setDoc(doc(db, USERS_COLLECTION, uid), updatedProfile);
 
   // 親のchildUidsに追加
-  await addChildToParent(parentProfile.uid, uid);
+  await addChildToParent(invite.ownerUid, uid);
 
   return updatedProfile;
 }

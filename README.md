@@ -114,8 +114,13 @@ git-ftpを使用した自動デプロイに対応しています。詳細は [do
 # git-ftpインストール（macOS）
 brew install git-ftp
 
-# FTP設定ファイル作成
-cp .git-ftp-config.example .git-ftp-config
+# FTP設定ファイル作成（プロジェクトルートに新規作成）
+cat > .git-ftp-config << 'EOF'
+url=ftp://example.com/public_html
+user=your-ftp-user
+password=your-ftp-password
+EOF
+
 # .git-ftp-config を編集してFTP接続情報を設定
 
 # 初回デプロイ
@@ -201,8 +206,10 @@ src/
 │   │   ├── layout.tsx     # 認証レイアウト
 │   │   ├── login/
 │   │   │   └── page.tsx   # ログイン画面
-│   │   └── signup/
+│   │   ├── signup/
 │   │       └── page.tsx   # サインアップ画面
+│   │   └── action/
+│   │       └── page.tsx   # メール認証アクション画面
 │   ├── (main)/            # メインレイアウトグループ
 │   │   ├── layout.tsx     # メインレイアウト
 │   │   ├── page.tsx       # TOP画面
@@ -223,6 +230,8 @@ src/
 │   └── genres.ts          # ジャンル定義（拡張用）
 ├── contexts/              # React Context
 │   └── AuthContext.tsx    # 認証・アプリ状態管理
+├── hooks/                 # カスタムフック
+│   └── useSharePermissionCountdown.ts
 ├── lib/                   # ユーティリティ
 │   ├── auth.ts            # Firebase Auth操作
 │   ├── exchange.ts        # 為替レート取得
