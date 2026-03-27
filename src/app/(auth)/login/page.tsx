@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, type ReadonlyURLSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,7 +23,7 @@ const loginSchema = z.object({
 
 type FormData = z.infer<typeof loginSchema>;
 
-function getSuccessMessage(searchParams: URLSearchParams): string | null {
+function getSuccessMessage(searchParams: ReadonlyURLSearchParams): string | null {
   if (searchParams.get("emailVerified") === "true") {
     return "メール認証が完了しました。メールアドレスとパスワードでログインしてください。";
   }
