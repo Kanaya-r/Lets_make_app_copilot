@@ -24,6 +24,14 @@ import { SHARE_CODE_LENGTH, SHARE_PERMISSION_DURATION } from "@/config/constants
 const USERS_COLLECTION = "users";
 const SHARED_DATA_COLLECTION = "sharedData";
 const SHARE_INVITES_COLLECTION = "shareInvites";
+const SHARE_CODE_PATTERN = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]+$/;
+
+function isValidShareCode(shareCode: string): boolean {
+  return (
+    shareCode.length === SHARE_CODE_LENGTH &&
+    SHARE_CODE_PATTERN.test(shareCode)
+  );
+}
 
 // 共有コード生成（暗号学的に安全な乱数を使用）
 export function generateShareCode(): string {
@@ -92,6 +100,10 @@ export async function findShareInvite(
   shareCode: string
 ): Promise<ShareInviteInfo | null> {
   try {
+    if (!isValidShareCode(shareCode)) {
+      return null;
+    }
+
     const inviteRef = doc(db, SHARE_INVITES_COLLECTION, shareCode);
     const inviteSnap = await getDoc(inviteRef);
     if (!inviteSnap.exists()) {
