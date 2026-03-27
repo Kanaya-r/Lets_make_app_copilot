@@ -49,6 +49,8 @@ export default function LoginPage() {
           error.message.includes("invalid-credential")
         ) {
           setFormError("メールアドレスまたはパスワードが正しくありません");
+        } else if (error.message.includes("email-not-verified")) {
+          setFormError("メール認証が完了していません。確認メールのリンクを開いてからログインしてください。");
         } else {
           setFormError("ログインに失敗しました。もう一度お試しください。");
         }

@@ -17,7 +17,14 @@ import {
   Toast,
   ChildAccountInfo,
 } from "@/types";
-import { onAuthChange, signUp, logIn, logOut } from "@/lib/auth";
+import {
+  onAuthChange,
+  signUp,
+  sendVerificationEmail,
+  logIn,
+  reloadUser,
+  logOut,
+} from "@/lib/auth";
 import {
   getUserProfile,
   createParentProfile,
@@ -140,10 +147,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(authUser);
 
       if (authUser) {
+        // 認証ユーザー切り替え時に古い共有購読を残さない
+        sharedDataUnsubRef.current?.();
+        sharedDataUnsubRef.current = null;
+        setUserProfile(null);
+        setSubscriptions([]);
+
         // ユーザープロファイルを取得
         const profile = await getUserProfile(authUser.uid);
         setUserProfile(profile);
       } else {
+        sharedDataUnsubRef.current?.();
+        sharedDataUnsubRef.current = null;
         setUserProfile(null);
         setSubscriptions([]);
       }
@@ -184,7 +199,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // subscriptionVersionを依存配列に追加し、プロファイル作成後に強制的に再購読させる
   // isShareOperating中はリスナーの再subscribeをスキップ（中間状態での権限エラーを防止）
   useEffect(() => {
-    if (!userProfile?.shareCode || isShareOperating) return;
+    if (!user || !userProfile?.shareCode || userProfile.uid !== user.uid || isShareOperating) {
+      return;
+    }
 
     const unsubscribe = subscribeToSharedData(userProfile.shareCode, (data) => {
       if (data) {
@@ -198,7 +215,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       unsubscribe();
       sharedDataUnsubRef.current = null;
     };
-  }, [userProfile?.shareCode, subscriptionVersion, isShareOperating]);
+  }, [user, userProfile?.uid, userProfile?.shareCode, subscriptionVersion, isShareOperating]);
 
   // 親アカウントの場合、childUidsが変更されたら子アカウント一覧を自動取得
   useEffect(() => {
@@ -230,12 +247,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ) => {
     try {
       const authUser = await signUp(email, password);
-      const profile = await createParentProfile(authUser.uid, email);
-
-      setUserProfile(profile);
-      // 購読を強制的に再開始させる
-      setSubscriptionVersion((v) => v + 1);
-      showToast("success", "アカウントを作成しました");
+      await sendVerificationEmail(authUser);
+      await logOut();
+      showToast("success", "確認メールを送信しました。メール内のリンクから認証を完了してください");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "登録に失敗しました";
       showToast("error", message);
@@ -247,7 +261,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const handleLogIn = async (email: string, password: string) => {
     try {
       const authUser = await logIn(email, password);
-      const profile = await getUserProfile(authUser.uid);
+      await reloadUser(authUser);
+      if (!authUser.emailVerified) {
+        await logOut();
+        throw new Error("email-not-verified");
+      }
+
+      let profile = await getUserProfile(authUser.uid);
+      if (!profile) {
+        profile = await createParentProfile(authUser.uid, authUser.email || email);
+        // 購読を強制的に再開始させる
+        setSubscriptionVersion((v) => v + 1);
+      }
+
       setUserProfile(profile);
       showToast("success", "ログインしました");
     } catch (error: unknown) {

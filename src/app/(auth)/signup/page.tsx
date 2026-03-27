@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,9 +23,10 @@ const signupSchema = z.object({
 type FormData = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
-  const router = useRouter();
   const { handleSignUp } = useAuth();
   const [formError, setFormError] = useState("");
+  const [isVerificationSent, setIsVerificationSent] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState("");
 
   const {
     register,
@@ -40,11 +40,16 @@ export default function SignupPage() {
     setFormError("");
     try {
       await handleSignUp(data.email, data.password);
-      router.push("/");
+      setVerificationEmail(data.email);
+      setIsVerificationSent(true);
     } catch (error: unknown) {
       if (error instanceof Error) {
-        // セキュリティのため、具体的なエラー理由は開示しない
-        setFormError("登録に失敗しました。もう一度お試しください。");
+        if (error.message.includes("email-already-in-use")) {
+          setFormError("このメールアドレスはすでに登録されています。");
+        } else {
+          // セキュリティのため、詳細は開示しない
+          setFormError("登録に失敗しました。もう一度お試しください。");
+        }
       }
     }
   };
@@ -56,58 +61,76 @@ export default function SignupPage() {
       <p className={styles.subtitle}>アカウントを作成</p>
 
       <div className={styles.card}>
-        <form className={styles.form} onSubmit={handleSubmit(onSubmit)}>
-          {formError && <div className={styles.formError}>{formError}</div>}
+        {isVerificationSent ? (
+          <>
+            <div className={styles.formSuccess}>
+              確認メールを送信しました。
+              <br />
+              送信先: {verificationEmail}
+              <br />
+              メール内のURLから認証を完了した後、ログインしてください。
+            </div>
+            <p className={styles.linkText}>
+              認証完了後は
+              <Link href="/login">ログイン画面へ</Link>
+            </p>
+          </>
+        ) : (
+          <>
+            <form className={styles.form} onSubmit={handleSubmit(onSubmit)}>
+              {formError && <div className={styles.formError}>{formError}</div>}
 
-          <div className={styles.field}>
-            <label className={styles.label}>
-              メールアドレス<span className={styles.required}>*</span>
-            </label>
-            <input
-              type="email"
-              className={`${styles.input} ${errors.email ? styles.error : ""}`}
-              placeholder="example@email.com"
-              autoComplete="email"
-              {...register("email")}
-            />
-            {errors.email && (
-              <span className={styles.errorMessage}>{errors.email.message}</span>
-            )}
-          </div>
+              <div className={styles.field}>
+                <label className={styles.label}>
+                  メールアドレス<span className={styles.required}>*</span>
+                </label>
+                <input
+                  type="email"
+                  className={`${styles.input} ${errors.email ? styles.error : ""}`}
+                  placeholder="example@email.com"
+                  autoComplete="email"
+                  {...register("email")}
+                />
+                {errors.email && (
+                  <span className={styles.errorMessage}>{errors.email.message}</span>
+                )}
+              </div>
 
-          <div className={styles.field}>
-            <label className={styles.label}>
-              パスワード<span className={styles.required}>*</span>
-            </label>
-            <input
-              type="password"
-              className={`${styles.input} ${errors.password ? styles.error : ""}`}
-              placeholder="6文字以上"
-              autoComplete="new-password"
-              {...register("password")}
-            />
-            {errors.password && (
-              <span className={styles.errorMessage}>{errors.password.message}</span>
-            )}
-          </div>
+              <div className={styles.field}>
+                <label className={styles.label}>
+                  パスワード<span className={styles.required}>*</span>
+                </label>
+                <input
+                  type="password"
+                  className={`${styles.input} ${errors.password ? styles.error : ""}`}
+                  placeholder="6文字以上"
+                  autoComplete="new-password"
+                  {...register("password")}
+                />
+                {errors.password && (
+                  <span className={styles.errorMessage}>{errors.password.message}</span>
+                )}
+              </div>
 
-          <button
-            type="submit"
-            className={`${styles.button} ${styles.primaryButton}`}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "作成中..." : "アカウントを作成"}
-          </button>
-        </form>
+              <button
+                type="submit"
+                className={`${styles.button} ${styles.primaryButton}`}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "作成中..." : "アカウントを作成"}
+              </button>
+            </form>
 
-        <div className={styles.divider}>
-          <span>または</span>
-        </div>
+            <div className={styles.divider}>
+              <span>または</span>
+            </div>
 
-        <p className={styles.linkText}>
-          すでにアカウントをお持ちの方は
-          <Link href="/login">ログイン</Link>
-        </p>
+            <p className={styles.linkText}>
+              すでにアカウントをお持ちの方は
+              <Link href="/login">ログイン</Link>
+            </p>
+          </>
+        )}
       </div>
     </div>
   );
