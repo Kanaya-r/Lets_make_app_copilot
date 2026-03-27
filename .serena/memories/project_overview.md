@@ -1,0 +1,4 @@
+- Purpose: 家庭向けサブスク管理アプリ「いえログ」。親子アカウント共有モデルでデータ共有。
+- Stack: Next.js App Router, TypeScript, React Context, Firebase Auth/Firestore, SCSS Modules.
+- Structure: src/app (auth/main groups), src/contexts/AuthContext.tsx, src/lib/firestore-v2.ts, src/components/*.
+- Security: firestore.rulesで認可制御。
