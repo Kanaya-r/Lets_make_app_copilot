@@ -37,21 +37,31 @@ export default function SettingsPage() {
   const [parentEmail, setParentEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!userProfile || userProfile.accountType !== 'child' || !userProfile.parentUid) {
+    if (!user || !userProfile || userProfile.accountType !== 'child' || !userProfile.parentUid) {
       setParentEmail(null);
       return;
     }
 
+    let isActive = true;
+
     getUserProfile(userProfile.parentUid)
       .then((parentProfile) => {
-        setParentEmail(parentProfile?.email ?? null);
+        if (isActive) {
+          setParentEmail(parentProfile?.email ?? null);
+        }
       })
       .catch(() => {
-        setParentEmail(null);
+        if (isActive) {
+          setParentEmail(null);
+        }
       });
+
+    return () => {
+      isActive = false;
+    };
   // parentUid が変わる（子→親昇格）タイミングのみ再取得すれば十分
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userProfile?.parentUid]);
+  }, [user?.uid, userProfile?.parentUid]);
 
   if (isLoading || !user || !userProfile) {
     return (

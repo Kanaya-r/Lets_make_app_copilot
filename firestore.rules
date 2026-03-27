@@ -111,7 +111,7 @@ service cloud.firestore {
         request.resource.data.email == resource.data.email &&
         request.resource.data.accountType == resource.data.accountType &&
         request.resource.data.shareCode == resource.data.shareCode &&
-        request.resource.data.childUids.size() <= resource.data.childUids.size();
+        request.resource.data.childUids.size() < resource.data.childUids.size();
     }
     
     // ヘルパー関数: 子アカウントが親アカウントに昇格する場合（共有解除による自動昇格、または子からの自発的解除）
@@ -261,8 +261,15 @@ service cloud.firestore {
 
       allow list: if false;
 
-      // 作成/更新はオーナー本人のみ
-      allow create, update: if isAuthenticated() &&
+      // 作成はオーナー本人のみ
+      allow create: if isAuthenticated() &&
+        request.resource.data.shareCode == shareCode &&
+        request.resource.data.ownerUid == request.auth.uid &&
+        request.resource.data.enabledUntil is timestamp;
+
+      // 更新は既存ドキュメントのオーナー本人のみ
+      allow update: if isAuthenticated() &&
+        resource.data.ownerUid == request.auth.uid &&
         request.resource.data.shareCode == shareCode &&
         request.resource.data.ownerUid == request.auth.uid &&
         request.resource.data.enabledUntil is timestamp;

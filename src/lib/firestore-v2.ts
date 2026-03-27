@@ -11,7 +11,7 @@ import {
   arrayRemove,
   Unsubscribe,
 } from "firebase/firestore";
-import { db } from "./firebase";
+import { auth, db } from "./firebase";
 import {
   Subscription,
   UserProfile,
@@ -49,6 +49,14 @@ export async function getUserProfile(uid: string): Promise<UserProfile | null> {
     }
     return null;
   } catch (error) {
+    const errorCode =
+      typeof error === "object" && error !== null && "code" in error
+        ? (error as { code?: string }).code
+        : undefined;
+    // 他ユーザーのプロフィール参照時に permission-denied が返るケースは null 扱いにする
+    if (errorCode === "permission-denied" && auth.currentUser?.uid !== uid) {
+      return null;
+    }
     console.error("Error getting user profile:", error);
     throw error;
   }
